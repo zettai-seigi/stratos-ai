@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Layout } from './components/layout/Layout';
@@ -17,7 +17,7 @@ function App() {
   return (
     <ThemeProvider>
       <AppProvider>
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <HashRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<StrategicCommandCenter />} />
@@ -32,7 +32,7 @@ function App() {
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </AppProvider>
     </ThemeProvider>
   );
