@@ -37,20 +37,20 @@ export const Header: React.FC = () => {
   });
 
   return (
-    <header className="h-16 bg-surface border-b border-outline-variant px-6 flex items-center justify-between">
-      {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm">
+    <header className="h-12 bg-[var(--cds-layer-01)] border-b border-[var(--cds-border-subtle-00)] px-4 flex items-center justify-between">
+      {/* Breadcrumbs - Carbon style */}
+      <nav className="flex items-center gap-1 text-sm">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={crumb.path}>
             {index > 0 && (
-              <ChevronRight className="w-4 h-4 text-outline" />
+              <ChevronRight className="w-4 h-4 text-[var(--cds-text-helper)]" />
             )}
             {index === breadcrumbs.length - 1 ? (
-              <span className="text-on-surface font-medium">{crumb.label}</span>
+              <span className="text-[var(--cds-text-primary)]">{crumb.label}</span>
             ) : (
               <Link
                 to={crumb.path}
-                className="text-on-surface-variant hover:text-on-surface transition-colors"
+                className="text-[var(--cds-link-primary)] hover:text-[var(--cds-link-primary-hover)] hover:underline"
               >
                 {crumb.label}
               </Link>
@@ -60,36 +60,38 @@ export const Header: React.FC = () => {
       </nav>
 
       {/* Right side actions */}
-      <div className="flex items-center gap-3">
-        {/* M3 Search Bar */}
+      <div className="flex items-center gap-1">
+        {/* Carbon Search - simplified */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--cds-icon-secondary)]" />
           <input
             type="text"
             placeholder="Search..."
-            className="w-64 pl-12 pr-4 py-2.5 bg-surface-container-highest rounded-full text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+            className="w-56 h-8 pl-9 pr-3 bg-[var(--cds-field-01)] border-b border-[var(--cds-border-strong-01)] text-sm text-[var(--cds-text-primary)] placeholder:text-[var(--cds-text-placeholder)] focus:outline-none focus:border-b-2 focus:border-[var(--cds-focus)] transition-colors"
           />
         </div>
 
-        {/* M3 AI Lens FAB-style button */}
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-tertiary-container text-on-tertiary-container rounded-full hover:shadow-md transition-all duration-200">
+        {/* Carbon Ghost Button - AI Lens */}
+        <button className="h-8 px-3 flex items-center gap-2 bg-transparent text-[var(--cds-link-primary)] hover:bg-[var(--cds-background-hover)] transition-colors text-sm">
           <Sparkles className="w-4 h-4" />
-          <span className="text-sm font-medium">AI Lens</span>
+          <span>AI Lens</span>
         </button>
 
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* M3 Icon Button - Notifications */}
-        <button className="relative p-2.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
+        {/* Carbon Icon Button - Notifications */}
+        <button className="relative w-10 h-10 flex items-center justify-center text-[var(--cds-icon-secondary)] hover:bg-[var(--cds-background-hover)] transition-colors">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--cds-support-error)] rounded-full"></span>
         </button>
 
-        {/* M3 Avatar */}
-        <div className="w-10 h-10 rounded-full bg-tertiary flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
-          <span className="text-on-tertiary text-sm font-medium">JD</span>
-        </div>
+        {/* User Avatar */}
+        <button className="w-10 h-10 flex items-center justify-center hover:bg-[var(--cds-background-hover)] transition-colors">
+          <div className="w-8 h-8 rounded-full bg-[#8a3ffc] flex items-center justify-center">
+            <span className="text-white text-sm font-medium">JD</span>
+          </div>
+        </button>
       </div>
     </header>
   );

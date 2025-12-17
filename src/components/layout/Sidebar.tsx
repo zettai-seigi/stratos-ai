@@ -18,15 +18,15 @@ interface NavItemProps {
   label: string;
 }
 
-// M3 Navigation Drawer Item
+// Carbon UI Shell Side Nav Item - no rounded corners
 const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-200 ${
+      `flex items-center gap-3 px-4 h-12 transition-colors duration-70 ${
         isActive
-          ? 'bg-primary-container text-on-primary-container font-medium'
-          : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text'
+          ? 'bg-[#393939] text-white border-l-[3px] border-l-[#0f62fe]'
+          : 'text-[#c6c6c6] hover:bg-[#353535] hover:text-white border-l-[3px] border-l-transparent'
       }`
     }
   >
@@ -35,10 +35,10 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => (
   </NavLink>
 );
 
-// M3 Section Header
+// Carbon Section Header
 const SectionHeader: React.FC<{ label: string }> = ({ label }) => (
-  <div className="px-4 py-3">
-    <span className="text-xs font-medium text-sidebar-text-muted uppercase tracking-wider">
+  <div className="px-4 py-3 mt-4">
+    <span className="text-xs font-semibold text-[#8d8d8d] uppercase tracking-wider">
       {label}
     </span>
   </div>
@@ -46,27 +46,22 @@ const SectionHeader: React.FC<{ label: string }> = ({ label }) => (
 
 export const Sidebar: React.FC = () => {
   return (
-    <aside className="w-72 min-h-screen bg-sidebar-bg flex flex-col">
-      {/* Logo - M3 style with more padding */}
-      <div className="px-6 py-6">
+    <aside className="w-64 min-h-screen bg-[#161616] flex flex-col">
+      {/* Carbon Header - Logo area */}
+      <div className="h-12 px-4 flex items-center border-b border-[#393939]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <Target className="w-6 h-6 text-on-primary" />
+          <div className="w-8 h-8 bg-[#0f62fe] flex items-center justify-center">
+            <Target className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <span className="text-xl font-semibold text-sidebar-text">
-              Strat<span className="text-primary">OS</span>
-            </span>
-            <span className="text-sidebar-text-muted font-normal ml-1">AI</span>
-          </div>
+          <span className="text-base font-semibold text-white">
+            Strat<span className="text-[#78a9ff]">OS</span>
+            <span className="text-[#8d8d8d] font-normal ml-1">AI</span>
+          </span>
         </div>
       </div>
 
-      {/* M3 Divider */}
-      <div className="mx-4 h-px bg-sidebar-hover" />
-
-      {/* Main Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {/* Carbon Side Nav */}
+      <nav className="flex-1 py-4 overflow-y-auto">
         <NavItem
           to="/"
           icon={<LayoutDashboard className="w-5 h-5" />}
@@ -93,8 +88,8 @@ export const Sidebar: React.FC = () => {
           label="AI Insights Center"
         />
 
-        {/* M3 Divider */}
-        <div className="!my-4 mx-1 h-px bg-sidebar-hover" />
+        {/* Divider */}
+        <div className="mx-4 my-4 h-px bg-[#393939]" />
 
         <SectionHeader label="Data" />
         <NavItem
@@ -108,8 +103,8 @@ export const Sidebar: React.FC = () => {
           label="Import Data"
         />
 
-        {/* M3 Divider */}
-        <div className="!my-4 mx-1 h-px bg-sidebar-hover" />
+        {/* Divider */}
+        <div className="mx-4 my-4 h-px bg-[#393939]" />
 
         <SectionHeader label="Manage" />
         <NavItem
@@ -124,15 +119,15 @@ export const Sidebar: React.FC = () => {
         />
       </nav>
 
-      {/* User Profile - M3 style */}
-      <div className="p-4">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-hover">
-          <div className="w-10 h-10 rounded-full bg-tertiary flex items-center justify-center">
-            <span className="text-on-tertiary font-medium text-sm">JD</span>
+      {/* User Profile - Carbon style */}
+      <div className="border-t border-[#393939]">
+        <div className="flex items-center gap-3 px-4 py-3 hover:bg-[#353535] cursor-pointer transition-colors">
+          <div className="w-8 h-8 rounded-full bg-[#8a3ffc] flex items-center justify-center">
+            <span className="text-white text-sm font-medium">JD</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-text truncate">Jane Doe</p>
-            <p className="text-xs text-sidebar-text-muted truncate">PMO Director</p>
+            <p className="text-sm text-white truncate">Jane Doe</p>
+            <p className="text-xs text-[#8d8d8d] truncate">PMO Director</p>
           </div>
         </div>
       </div>

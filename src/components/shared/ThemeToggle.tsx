@@ -12,19 +12,19 @@ export const ThemeToggle: React.FC = () => {
   ];
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-surface-container rounded-full">
-      {options.map((option) => (
+    <div className="flex items-center">
+      {options.map((option, index) => (
         <button
           key={option.value}
           onClick={() => setTheme(option.value)}
-          className={`p-2 rounded-full transition-all duration-200 ${
+          className={`h-8 px-3 flex items-center gap-2 transition-colors duration-70 text-sm ${
             theme === option.value
-              ? 'bg-secondary-container text-on-secondary-container'
-              : 'text-on-surface-variant hover:bg-surface-container-high'
-          }`}
+              ? 'bg-[var(--cds-layer-selected-01)] text-[var(--cds-text-primary)]'
+              : 'bg-[var(--cds-field-01)] text-[var(--cds-text-secondary)] hover:bg-[var(--cds-field-hover-01)]'
+          } ${index === 0 ? '' : 'border-l border-[var(--cds-border-subtle-01)]'}`}
           title={option.label}
         >
-          <option.icon className="w-5 h-5" />
+          <option.icon className="w-4 h-4" />
         </button>
       ))}
     </div>
