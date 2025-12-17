@@ -6,49 +6,59 @@
   --color-rag-amber: #f59e0b;
   --color-rag-green: #22c55e;
 
-  /* Accent colors (same for both themes) */
+  /* Accent colors */
   --color-accent-blue: #3b82f6;
   --color-accent-purple: #8b5cf6;
   --color-accent-cyan: #06b6d4;
 }
 
-/* Dark theme (default) */
-:root,
-:root.dark {
-  --color-bg-primary: #0f1419;
-  --color-bg-secondary: #1a1f2e;
-  --color-bg-card: #1e2538;
-  --color-bg-hover: #252d40;
-
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-
-  --color-border: #2d3748;
-  --color-border-light: #374151;
-
-  --color-sidebar-bg: #0d1117;
-  --color-sidebar-hover: #161b22;
-  --color-sidebar-active: #1f2937;
-}
+/*
+ * shadcn-inspired design system
+ * Using proper contrast ratios for accessibility
+ */
 
 /* Light theme */
+:root,
 :root.light {
-  --color-bg-primary: #f8fafc;
-  --color-bg-secondary: #f1f5f9;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
   --color-bg-card: #ffffff;
-  --color-bg-hover: #e2e8f0;
+  --color-bg-hover: #f3f4f6;
 
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-text-primary: #09090b;
+  --color-text-secondary: #71717a;
+  --color-text-muted: #a1a1aa;
 
-  --color-border: #e2e8f0;
-  --color-border-light: #cbd5e1;
+  --color-border: #e4e4e7;
+  --color-border-light: #f4f4f5;
 
-  --color-sidebar-bg: #1e293b;
-  --color-sidebar-hover: #334155;
-  --color-sidebar-active: #475569;
+  /* Sidebar stays dark in light mode for contrast (like shadcn dashboard) */
+  --color-sidebar-bg: #09090b;
+  --color-sidebar-hover: #18181b;
+  --color-sidebar-active: #27272a;
+  --color-sidebar-text: #fafafa;
+  --color-sidebar-text-muted: #a1a1aa;
+}
+
+/* Dark theme */
+:root.dark {
+  --color-bg-primary: #09090b;
+  --color-bg-secondary: #0a0a0b;
+  --color-bg-card: #09090b;
+  --color-bg-hover: #18181b;
+
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+
+  --color-border: #27272a;
+  --color-border-light: #3f3f46;
+
+  --color-sidebar-bg: #09090b;
+  --color-sidebar-hover: #18181b;
+  --color-sidebar-active: #27272a;
+  --color-sidebar-text: #fafafa;
+  --color-sidebar-text-muted: #a1a1aa;
 }
 
 /* Base styles */
@@ -59,11 +69,13 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   min-height: 100vh;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -71,30 +83,65 @@ body {
   display: flex;
 }
 
-/* Scrollbar styling */
+/* Card shadows */
+.light .card-shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.dark .card-shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+}
+
+/* Scrollbar styling - Light */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+/* Scrollbar styling - Dark */
+.dark ::-webkit-scrollbar,
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
+.dark ::-webkit-scrollbar-track,
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: #18181b;
 }
 
+.dark ::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: #3f3f46;
   border-radius: 4px;
 }
 
+.dark ::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-light);
+  background: #52525b;
 }
 
-/* Light mode scrollbar */
-.light ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--color-accent-blue);
+  outline-offset: 2px;
 }
 
-.light ::-webkit-scrollbar-thumb {
-  background: var(--color-border-light);
+/* Selection */
+::selection {
+  background-color: var(--color-accent-blue);
+  color: white;
 }

@@ -12,15 +12,15 @@ export const ThemeToggle: React.FC = () => {
   ];
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-bg-hover rounded-lg">
+    <div className="flex items-center gap-0.5 p-1 bg-bg-secondary border border-border rounded-lg">
       {options.map((option) => (
         <button
           key={option.value}
           onClick={() => setTheme(option.value)}
-          className={`p-2 rounded-md transition-colors ${
+          className={`p-2 rounded-md transition-all ${
             theme === option.value
-              ? 'bg-bg-card text-accent-blue shadow-sm'
-              : 'text-text-muted hover:text-text-primary'
+              ? 'bg-bg-card text-text-primary shadow-sm'
+              : 'text-text-muted hover:text-text-secondary hover:bg-bg-hover'
           }`}
           title={option.label}
         >
