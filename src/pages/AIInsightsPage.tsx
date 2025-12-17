@@ -219,16 +219,16 @@ export const AIInsightsPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">AI Insights Center</h1>
           <p className="text-text-secondary mt-1">AI-powered analysis and recommendations</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-accent-purple/20 rounded-lg border border-accent-purple/30">
+        <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
           <Sparkles className="w-5 h-5 text-accent-purple" />
-          <span className="text-sm text-accent-purple font-medium">AI Powered</span>
+          <span className="text-sm text-text-secondary">AI Powered</span>
         </div>
       </div>
 

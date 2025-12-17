@@ -72,18 +72,24 @@ export const ImportPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Import Data</h1>
-        <p className="text-text-secondary mt-1">
-          Import Projects and Tasks from an Excel template.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">Import Data</h1>
+          <p className="text-text-secondary mt-1">
+            Import Projects and Tasks from an Excel template.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+          <Upload className="w-5 h-5 text-accent-purple" />
+          <span className="text-sm text-text-secondary">Data Import</span>
+        </div>
       </div>
 
       {/* Import Complete Message */}
       {importComplete && (
-        <div className="bg-rag-green/10 border border-rag-green/30 rounded-xl p-6">
+        <div className="w-full bg-rag-green/10 border border-rag-green/30 rounded-xl p-5">
           <div className="flex items-center gap-3 mb-4">
             <CheckCircle className="w-8 h-8 text-rag-green" />
             <div>
@@ -107,7 +113,7 @@ export const ImportPage: React.FC = () => {
 
       {/* File Upload Area */}
       {!importComplete && (
-        <div className="bg-bg-card rounded-xl border border-border p-6">
+        <div className="w-full bg-bg-card rounded-xl border border-border p-5">
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               selectedFile ? 'border-accent-blue bg-accent-blue/5' : 'border-border hover:border-accent-blue/50'
@@ -156,7 +162,7 @@ export const ImportPage: React.FC = () => {
 
       {/* Processing Indicator */}
       {isProcessing && (
-        <div className="bg-bg-card rounded-xl border border-border p-6 text-center">
+        <div className="w-full bg-bg-card rounded-xl border border-border p-5 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-text-secondary">Validating file...</p>
         </div>
@@ -207,7 +213,7 @@ export const ImportPage: React.FC = () => {
 
           {/* Import Preview */}
           {validationResult.isValid && (
-            <div className="bg-bg-card rounded-xl border border-border p-5">
+            <div className="w-full bg-bg-card rounded-xl border border-border p-5">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle className="w-5 h-5 text-rag-green" />
                 <h3 className="font-semibold text-text-primary">Ready to Import</h3>

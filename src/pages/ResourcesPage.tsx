@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Button, Modal } from '../components/shared';
 import { Resource } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, UsersRound } from 'lucide-react';
 
 const avatarColors = [
   '#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ec4899',
@@ -78,16 +78,22 @@ export const ResourcesPage: React.FC = () => {
     tasks.filter((t) => t.assigneeId === resourceId && t.kanbanStatus !== 'done').length;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Resources</h1>
           <p className="text-text-secondary mt-1">Manage team members and their capacity.</p>
         </div>
-        <Button onClick={() => handleOpenModal()} icon={<Plus className="w-4 h-4" />}>
-          Add Resource
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+            <UsersRound className="w-5 h-5 text-accent-blue" />
+            <span className="text-sm text-text-secondary">Team Management</span>
+          </div>
+          <Button onClick={() => handleOpenModal()} icon={<Plus className="w-4 h-4" />}>
+            Add Resource
+          </Button>
+        </div>
       </div>
 
       {/* Resources Grid */}

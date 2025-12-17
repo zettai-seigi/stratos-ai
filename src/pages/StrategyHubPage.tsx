@@ -142,7 +142,7 @@ const PillarSection: React.FC<PillarSectionProps> = ({ pillar, kpis, initiativeC
   };
 
   return (
-    <div className="bg-bg-card border border-border rounded-xl overflow-hidden">
+    <div className="w-full bg-bg-card border border-border rounded-xl overflow-hidden">
       {/* Pillar Header */}
       <div
         className="flex items-center justify-between p-4 cursor-pointer hover:bg-bg-hover transition-colors"
@@ -258,7 +258,7 @@ export const StrategyHubPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -272,7 +272,7 @@ export const StrategyHubPage: React.FC = () => {
       </div>
 
       {/* BSC Health Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-bg-card rounded-xl border border-border p-5">
           <p className="text-sm text-text-secondary mb-1">Total Pillars</p>
           <p className="text-3xl font-bold text-text-primary">{pillars.length}</p>
@@ -301,7 +301,7 @@ export const StrategyHubPage: React.FC = () => {
       </div>
 
       {/* Strategy Pillars */}
-      <div className="space-y-4">
+      <div className="w-full space-y-4">
         <h2 className="text-lg font-semibold text-text-primary">Strategy Pillars</h2>
         {pillars
           .sort((a, b) => a.displayOrder - b.displayOrder)

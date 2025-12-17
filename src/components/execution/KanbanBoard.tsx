@@ -4,10 +4,12 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  closestCenter,
+  DragOverEvent,
+  closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -30,6 +32,7 @@ interface KanbanColumnProps {
   status: KanbanStatus;
   tasks: Task[];
   resources: Resource[];
+  isOver: boolean;
   onAddTask?: () => void;
   onEditTask?: (task: Task) => void;
 }
@@ -46,9 +49,18 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   status,
   tasks,
   resources,
+  isOver,
   onAddTask,
   onEditTask,
 }) => {
+  const { setNodeRef } = useDroppable({
+    id: `column-${status}`,
+    data: {
+      type: 'column',
+      status,
+    },
+  });
+
   const columnTasks = tasks.filter((t) => t.kanbanStatus === status);
   const config = columnConfig.find((c) => c.status === status)!;
 
@@ -71,8 +83,15 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </button>
       </div>
 
-      {/* Column Content */}
-      <div className="bg-bg-secondary rounded-lg p-2 min-h-[400px]">
+      {/* Column Content - Droppable Area */}
+      <div
+        ref={setNodeRef}
+        className={`bg-bg-secondary rounded-lg p-2 min-h-[400px] transition-all duration-200 ${
+          isOver
+            ? 'ring-2 ring-accent-blue ring-offset-2 ring-offset-bg-primary bg-accent-blue/5'
+            : ''
+        }`}
+      >
         <SortableContext
           items={columnTasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
@@ -88,6 +107,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             ))}
           </div>
         </SortableContext>
+
+        {/* Drop hint when hovering */}
+        {isOver && columnTasks.length === 0 && (
+          <div className="flex items-center justify-center h-20 border-2 border-dashed border-accent-blue/50 rounded-lg text-accent-blue text-sm">
+            Drop here
+          </div>
+        )}
 
         {/* Add Task Button */}
         {status === 'todo' && onAddTask && (
@@ -112,11 +138,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 }) => {
   const { dispatch } = useApp();
   const [activeTask, setActiveTask] = React.useState<Task | null>(null);
+  const [overColumnId, setOverColumnId] = React.useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5, // Reduced for more responsive drag
       },
     })
   );
@@ -128,27 +155,54 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+
+    if (!over) {
+      setOverColumnId(null);
+      return;
+    }
+
+    // Check if over a column
+    if (over.id.toString().startsWith('column-')) {
+      setOverColumnId(over.id.toString());
+    } else {
+      // Over a task - find which column that task belongs to
+      const overTask = tasks.find((t) => t.id === over.id);
+      if (overTask) {
+        setOverColumnId(`column-${overTask.kanbanStatus}`);
+      }
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTask(null);
+    setOverColumnId(null);
 
     if (!over) return;
 
     const activeTask = tasks.find((t) => t.id === active.id);
     if (!activeTask) return;
 
-    // Determine the new status based on where the task was dropped
-    // In a more complex implementation, we'd track which column was dropped into
-    // For now, we'll check if the over element is another task and get its status
-    const overTask = tasks.find((t) => t.id === over.id);
-    if (overTask && activeTask.id !== overTask.id) {
-      const newStatus = overTask.kanbanStatus;
-      if (activeTask.kanbanStatus !== newStatus) {
-        dispatch({
-          type: 'UPDATE_TASK',
-          payload: { ...activeTask, kanbanStatus: newStatus },
-        });
+    let newStatus: KanbanStatus | null = null;
+
+    // Dropped on a column
+    if (over.id.toString().startsWith('column-')) {
+      newStatus = over.id.toString().replace('column-', '') as KanbanStatus;
+    } else {
+      // Dropped on another task - get that task's column
+      const overTask = tasks.find((t) => t.id === over.id);
+      if (overTask) {
+        newStatus = overTask.kanbanStatus;
       }
+    }
+
+    if (newStatus && activeTask.kanbanStatus !== newStatus) {
+      dispatch({
+        type: 'UPDATE_TASK',
+        payload: { ...activeTask, kanbanStatus: newStatus },
+      });
     }
   };
 
@@ -158,8 +212,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -170,18 +225,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             status={column.status}
             tasks={tasks}
             resources={resources}
+            isOver={overColumnId === `column-${column.status}`}
             onAddTask={column.status === 'todo' ? onAddTask : undefined}
             onEditTask={onEditTask}
           />
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={{
+        duration: 200,
+        easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+      }}>
         {activeTask && (
-          <TaskCard
-            task={activeTask}
-            resource={getResource(activeTask.assigneeId)}
-          />
+          <div className="rotate-3 scale-105">
+            <TaskCard
+              task={activeTask}
+              resource={getResource(activeTask.assigneeId)}
+            />
+          </div>
         )}
       </DragOverlay>
     </DndContext>

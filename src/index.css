@@ -1,4 +1,9 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+/*
+ ---break---
+ */
+@custom-variant dark (&:is(.dark *));
 
 /*
  * IBM Carbon Design System
@@ -74,6 +79,23 @@
   --color-rag-red: #da1e28;
   --color-rag-amber: #f1c21b;
   --color-rag-green: #24a148;
+
+  /* ========================================
+   * Sidebar Colors (theme-aware)
+   * ======================================== */
+  --color-sidebar-bg: var(--color-sidebar-bg);
+  --color-sidebar-hover: var(--color-sidebar-hover);
+  --color-sidebar-active: var(--color-sidebar-active);
+  --color-sidebar-text: var(--color-sidebar-text);
+  --color-sidebar-text-muted: var(--color-sidebar-text-muted);
+  --color-sidebar-border: var(--color-sidebar-border);
+
+  /* ========================================
+   * Accent Colors (theme-aware)
+   * ======================================== */
+  --color-accent-blue: var(--color-accent-blue);
+  --color-accent-purple: var(--color-accent-purple);
+  --color-accent-cyan: var(--color-accent-cyan);
 }
 
 /* ==========================================
@@ -186,13 +208,14 @@
   --cds-field-hover-02: #e8e8e8;
   --cds-field-hover-03: #e8e8e8;
 
-  /* UI Shell (Sidebar) - uses Gray 100 for contrast */
-  --cds-shell-background: #161616;
-  --cds-shell-text: #f4f4f4;
-  --cds-shell-text-secondary: #c6c6c6;
-  --cds-shell-hover: #353535;
-  --cds-shell-active: #393939;
-  --cds-shell-selected: #525252;
+  /* UI Shell (Sidebar) - Light theme uses white/gray */
+  --cds-shell-background: #ffffff;
+  --cds-shell-text: #161616;
+  --cds-shell-text-secondary: #525252;
+  --cds-shell-hover: #e8e8e8;
+  --cds-shell-active: #e0e0e0;
+  --cds-shell-selected: #c6c6c6;
+  --cds-shell-border: #e0e0e0;
 
   /* Legacy mappings */
   --color-bg-primary: var(--cds-background);
@@ -214,6 +237,7 @@
   --color-sidebar-active: var(--cds-shell-active);
   --color-sidebar-text: var(--cds-shell-text);
   --color-sidebar-text-muted: var(--cds-shell-text-secondary);
+  --color-sidebar-border: var(--cds-shell-border);
 }
 
 /* ==========================================
@@ -325,13 +349,14 @@
   --cds-field-hover-02: #474747;
   --cds-field-hover-03: #636363;
 
-  /* UI Shell (Sidebar) */
+  /* UI Shell (Sidebar) - Dark theme */
   --cds-shell-background: #161616;
   --cds-shell-text: #f4f4f4;
   --cds-shell-text-secondary: #c6c6c6;
   --cds-shell-hover: #353535;
   --cds-shell-active: #393939;
   --cds-shell-selected: #525252;
+  --cds-shell-border: #393939;
 
   /* Legacy mappings */
   --color-bg-primary: var(--cds-background);
@@ -353,6 +378,7 @@
   --color-sidebar-active: var(--cds-shell-active);
   --color-sidebar-text: var(--cds-shell-text);
   --color-sidebar-text-muted: var(--cds-shell-text-secondary);
+  --color-sidebar-border: var(--cds-shell-border);
 }
 
 /* ==========================================
@@ -724,4 +750,133 @@ body {
   background-color: var(--cds-border-subtle-01);
   margin: 0;
   border: none;
+}
+/*
+ ---break---
+ */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+/*
+ ---break---
+ */
+:root {
+  /* Shadcn variables mapped to Carbon tokens */
+  --radius: 0;  /* Carbon uses sharp corners */
+  --background: var(--cds-background);
+  --foreground: var(--cds-text-primary);
+  --card: var(--cds-layer-01);
+  --card-foreground: var(--cds-text-primary);
+  --popover: var(--cds-layer-02);
+  --popover-foreground: var(--cds-text-primary);
+  --primary: var(--cds-button-primary);
+  --primary-foreground: var(--cds-text-on-color);
+  --secondary: var(--cds-button-secondary);
+  --secondary-foreground: var(--cds-text-on-color);
+  --muted: var(--cds-layer-01);
+  --muted-foreground: var(--cds-text-helper);
+  --accent: var(--cds-layer-hover-01);
+  --accent-foreground: var(--cds-text-primary);
+  --destructive: var(--cds-button-danger-primary);
+  --border: var(--cds-border-subtle-01);
+  --input: var(--cds-field-01);
+  --ring: var(--cds-focus);
+  --chart-1: var(--color-blue-60);
+  --chart-2: var(--color-teal-50);
+  --chart-3: var(--color-purple-60);
+  --chart-4: var(--color-green-50);
+  --chart-5: var(--color-orange-40);
+  --sidebar: var(--cds-shell-background);
+  --sidebar-foreground: var(--cds-shell-text);
+  --sidebar-primary: var(--cds-interactive);
+  --sidebar-primary-foreground: var(--cds-text-on-color);
+  --sidebar-accent: var(--cds-shell-hover);
+  --sidebar-accent-foreground: var(--cds-shell-text);
+  --sidebar-border: var(--cds-border-subtle-00);
+  --sidebar-ring: var(--cds-focus);
+}
+/*
+ ---break---
+ */
+.dark {
+  /* Dark mode inherits from :root.dark Carbon tokens */
+  --background: var(--cds-background);
+  --foreground: var(--cds-text-primary);
+  --card: var(--cds-layer-01);
+  --card-foreground: var(--cds-text-primary);
+  --popover: var(--cds-layer-02);
+  --popover-foreground: var(--cds-text-primary);
+  --primary: var(--cds-button-primary);
+  --primary-foreground: var(--cds-text-on-color);
+  --secondary: var(--cds-button-secondary);
+  --secondary-foreground: var(--cds-text-on-color);
+  --muted: var(--cds-layer-01);
+  --muted-foreground: var(--cds-text-helper);
+  --accent: var(--cds-layer-hover-01);
+  --accent-foreground: var(--cds-text-primary);
+  --destructive: var(--cds-button-danger-primary);
+  --border: var(--cds-border-subtle-01);
+  --input: var(--cds-field-01);
+  --ring: var(--cds-focus);
+  --chart-1: var(--color-blue-50);
+  --chart-2: var(--color-teal-50);
+  --chart-3: var(--color-purple-50);
+  --chart-4: var(--color-green-40);
+  --chart-5: var(--color-orange-40);
+  --sidebar: var(--cds-shell-background);
+  --sidebar-foreground: var(--cds-shell-text);
+  --sidebar-primary: var(--cds-interactive);
+  --sidebar-primary-foreground: var(--cds-text-on-color);
+  --sidebar-accent: var(--cds-shell-hover);
+  --sidebar-accent-foreground: var(--cds-shell-text);
+  --sidebar-border: var(--cds-border-subtle-00);
+  --sidebar-ring: var(--cds-focus);
+}
+/*
+ ---break---
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

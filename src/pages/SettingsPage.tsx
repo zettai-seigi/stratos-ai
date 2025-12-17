@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/shared';
-import { RefreshCw, Database, AlertTriangle, Info } from 'lucide-react';
+import { RefreshCw, Database, AlertTriangle, Info, Settings } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { state, resetToSeedData } = useApp();
@@ -24,15 +24,21 @@ export const SettingsPage: React.FC = () => {
   const storageUsedKB = (storageUsed / 1024).toFixed(2);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-        <p className="text-text-secondary mt-1">Manage application data and preferences.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
+          <p className="text-text-secondary mt-1">Manage application data and preferences.</p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+          <Settings className="w-5 h-5 text-accent-cyan" />
+          <span className="text-sm text-text-secondary">Configuration</span>
+        </div>
       </div>
 
       {/* Storage Info */}
-      <div className="bg-bg-card rounded-xl border border-border p-5">
+      <div className="w-full bg-bg-card rounded-xl border border-border p-5">
         <div className="flex items-center gap-3 mb-4">
           <Database className="w-5 h-5 text-accent-blue" />
           <h2 className="text-lg font-semibold text-text-primary">Data Storage</h2>
@@ -68,7 +74,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Data Actions */}
-      <div className="bg-bg-card rounded-xl border border-border p-5">
+      <div className="w-full bg-bg-card rounded-xl border border-border p-5">
         <div className="flex items-center gap-3 mb-4">
           <RefreshCw className="w-5 h-5 text-accent-purple" />
           <h2 className="text-lg font-semibold text-text-primary">Data Management</h2>
@@ -114,7 +120,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* About */}
-      <div className="bg-bg-card rounded-xl border border-border p-5">
+      <div className="w-full bg-bg-card rounded-xl border border-border p-5">
         <h2 className="text-lg font-semibold text-text-primary mb-4">About StratOS AI</h2>
         <div className="space-y-2 text-sm text-text-secondary">
           <p>

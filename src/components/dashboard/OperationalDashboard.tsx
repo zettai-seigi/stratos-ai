@@ -33,13 +33,30 @@ export const OperationalDashboard: React.FC = () => {
 
   if (!project) {
     return (
-      <div className="flex flex-col items-center justify-center h-96">
-        <FolderKanban className="w-16 h-16 text-text-muted mb-4" />
-        <h2 className="text-xl font-semibold text-text-primary mb-2">No Project Selected</h2>
-        <p className="text-text-secondary mb-4">
-          Select a project from the Portfolio Hub to view its execution dashboard.
-        </p>
-        <Button onClick={() => navigate('/portfolio')}>Go to Portfolio Hub</Button>
+      <div className="w-full space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">Project Execution</h1>
+            <p className="text-text-secondary mt-1">Manage tasks and track project progress.</p>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+            <FolderKanban className="w-5 h-5 text-accent-cyan" />
+            <span className="text-sm text-text-secondary">Execution Board</span>
+          </div>
+        </div>
+
+        {/* Empty State */}
+        <div className="w-full bg-bg-card rounded-xl border border-border p-5">
+          <div className="flex flex-col items-center justify-center py-16">
+            <FolderKanban className="w-16 h-16 text-text-muted mb-4" />
+            <h2 className="text-xl font-semibold text-text-primary mb-2">No Project Selected</h2>
+            <p className="text-text-secondary mb-4">
+              Select a project from the Portfolio Hub to view its execution dashboard.
+            </p>
+            <Button onClick={() => navigate('/portfolio')}>Go to Portfolio Hub</Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -79,7 +96,7 @@ export const OperationalDashboard: React.FC = () => {
   const completionPercentage = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Back Button */}
       <button
         onClick={() => navigate('/portfolio')}

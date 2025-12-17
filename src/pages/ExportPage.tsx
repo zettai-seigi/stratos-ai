@@ -1,8 +1,8 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { generateExcelTemplate, exportFullData } from '../utils/excelExport';
-import { Button } from '../components/shared';
-import { Download, FileSpreadsheet, Database, CheckCircle, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Download, FileSpreadsheet, Database, CheckCircle, Info, Upload } from 'lucide-react';
 
 export const ExportPage: React.FC = () => {
   const { state } = useApp();
@@ -16,13 +16,19 @@ export const ExportPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Export Data</h1>
-        <p className="text-text-secondary mt-1">
-          Export your BSC structure as a template or create a full backup.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">Export Data</h1>
+          <p className="text-text-secondary mt-1">
+            Export your BSC structure as a template or create a full backup.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+          <Upload className="w-5 h-5 text-accent-blue" />
+          <span className="text-sm text-text-secondary">Data Export</span>
+        </div>
       </div>
 
       {/* Current Data Summary */}
@@ -62,7 +68,7 @@ export const ExportPage: React.FC = () => {
       {/* Export Options */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Template Export */}
-        <div className="bg-bg-card rounded-xl border border-border p-6">
+        <div className="bg-bg-card rounded-xl border border-border p-5">
           <div className="flex items-start gap-4 mb-6">
             <div className="p-3 bg-accent-blue/20 rounded-lg">
               <FileSpreadsheet className="w-6 h-6 text-accent-blue" />
@@ -98,15 +104,15 @@ export const ExportPage: React.FC = () => {
 
           <Button
             onClick={handleExportTemplate}
-            icon={<Download className="w-4 h-4" />}
             className="w-full"
           >
+            <Download className="w-4 h-4" />
             Download Template
           </Button>
         </div>
 
         {/* Full Backup */}
-        <div className="bg-bg-card rounded-xl border border-border p-6">
+        <div className="bg-bg-card rounded-xl border border-border p-5">
           <div className="flex items-start gap-4 mb-6">
             <div className="p-3 bg-accent-purple/20 rounded-lg">
               <Database className="w-6 h-6 text-accent-purple" />
@@ -143,9 +149,9 @@ export const ExportPage: React.FC = () => {
           <Button
             onClick={handleExportBackup}
             variant="secondary"
-            icon={<Download className="w-4 h-4" />}
             className="w-full"
           >
+            <Download className="w-4 h-4" />
             Download Backup
           </Button>
         </div>
