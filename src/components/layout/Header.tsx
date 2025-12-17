@@ -37,20 +37,20 @@ export const Header: React.FC = () => {
   });
 
   return (
-    <header className="h-16 bg-bg-secondary border-b border-border px-6 flex items-center justify-between">
+    <header className="h-16 bg-surface border-b border-outline-variant px-6 flex items-center justify-between">
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-sm">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={crumb.path}>
             {index > 0 && (
-              <ChevronRight className="w-4 h-4 text-text-muted" />
+              <ChevronRight className="w-4 h-4 text-outline" />
             )}
             {index === breadcrumbs.length - 1 ? (
-              <span className="text-text-primary font-medium">{crumb.label}</span>
+              <span className="text-on-surface font-medium">{crumb.label}</span>
             ) : (
               <Link
                 to={crumb.path}
-                className="text-text-secondary hover:text-text-primary transition-colors"
+                className="text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 {crumb.label}
               </Link>
@@ -60,19 +60,19 @@ export const Header: React.FC = () => {
       </nav>
 
       {/* Right side actions */}
-      <div className="flex items-center gap-4">
-        {/* Search */}
+      <div className="flex items-center gap-3">
+        {/* M3 Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
           <input
             type="text"
             placeholder="Search..."
-            className="w-64 pl-10 pr-4 py-2 bg-bg-card border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-blue transition-colors"
+            className="w-64 pl-12 pr-4 py-2.5 bg-surface-container-highest rounded-full text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary transition-all"
           />
         </div>
 
-        {/* AI Lens Toggle */}
-        <button className="flex items-center gap-2 px-3 py-2 bg-accent-purple/20 text-accent-purple rounded-lg hover:bg-accent-purple/30 transition-colors">
+        {/* M3 AI Lens FAB-style button */}
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-tertiary-container text-on-tertiary-container rounded-full hover:shadow-md transition-all duration-200">
           <Sparkles className="w-4 h-4" />
           <span className="text-sm font-medium">AI Lens</span>
         </button>
@@ -80,15 +80,15 @@ export const Header: React.FC = () => {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* Notifications */}
-        <button className="relative p-2 text-text-secondary hover:text-text-primary transition-colors">
+        {/* M3 Icon Button - Notifications */}
+        <button className="relative p-2.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-rag-red rounded-full"></span>
+          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
         </button>
 
-        {/* Profile */}
-        <div className="w-9 h-9 rounded-full bg-accent-purple flex items-center justify-center cursor-pointer">
-          <span className="text-white text-sm font-medium">JD</span>
+        {/* M3 Avatar */}
+        <div className="w-10 h-10 rounded-full bg-tertiary flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+          <span className="text-on-tertiary text-sm font-medium">JD</span>
         </div>
       </div>
     </header>

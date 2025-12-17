@@ -1,68 +1,191 @@
 @import "tailwindcss";
 
-@theme {
-  /* RAG Status Colors (same for both themes) */
-  --color-rag-red: #ef4444;
-  --color-rag-amber: #f59e0b;
-  --color-rag-green: #22c55e;
-
-  /* Accent colors */
-  --color-accent-blue: #3b82f6;
-  --color-accent-purple: #8b5cf6;
-  --color-accent-cyan: #06b6d4;
-}
-
 /*
- * Theme system with rich visual depth
- * Dark mode: Original zinc/slate design
- * Light mode: Warm slate with depth, not flat white
+ * Material Design 3 (M3) Design System
+ * Based on https://m3.material.io/
  */
 
-/* Light theme - Slate-based with depth */
+@theme {
+  /* ========================================
+   * M3 Shape Scale (Corner Radius)
+   * ======================================== */
+  --radius-none: 0px;
+  --radius-xs: 4px;      /* Extra Small */
+  --radius-sm: 8px;      /* Small */
+  --radius-md: 12px;     /* Medium */
+  --radius-lg: 16px;     /* Large */
+  --radius-xl: 28px;     /* Extra Large */
+  --radius-full: 9999px; /* Full (circular) */
+
+  /* ========================================
+   * RAG Status Colors (Business semantics)
+   * ======================================== */
+  --color-rag-red: #dc2626;
+  --color-rag-amber: #d97706;
+  --color-rag-green: #16a34a;
+
+  /* ========================================
+   * M3 Primary Color Palette (Blue)
+   * ======================================== */
+  --color-primary: #1d4ed8;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #dbeafe;
+  --color-on-primary-container: #1e3a5f;
+
+  /* ========================================
+   * M3 Secondary Color Palette (Slate)
+   * ======================================== */
+  --color-secondary: #475569;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #e2e8f0;
+  --color-on-secondary-container: #1e293b;
+
+  /* ========================================
+   * M3 Tertiary Color Palette (Purple)
+   * ======================================== */
+  --color-tertiary: #7c3aed;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #ede9fe;
+  --color-on-tertiary-container: #4c1d95;
+
+  /* ========================================
+   * M3 Error Color Palette
+   * ======================================== */
+  --color-error: #dc2626;
+  --color-on-error: #ffffff;
+  --color-error-container: #fee2e2;
+  --color-on-error-container: #7f1d1d;
+}
+
+/* ==========================================
+ * M3 Light Theme
+ * ========================================== */
 :root,
 :root.light {
-  --color-bg-primary: #f8fafc;      /* slate-50 - subtle gray, not pure white */
-  --color-bg-secondary: #f1f5f9;    /* slate-100 - slightly darker for contrast */
-  --color-bg-card: #ffffff;         /* pure white cards pop against slate bg */
-  --color-bg-hover: #e2e8f0;        /* slate-200 */
+  /* Surface colors with tonal elevation */
+  --color-surface: #ffffff;
+  --color-surface-dim: #f1f5f9;
+  --color-surface-bright: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f8fafc;
+  --color-surface-container: #f1f5f9;
+  --color-surface-container-high: #e2e8f0;
+  --color-surface-container-highest: #cbd5e1;
+  --color-surface-variant: #e2e8f0;
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #475569;
+  --color-outline: #94a3b8;
+  --color-outline-variant: #cbd5e1;
 
-  --color-text-primary: #0f172a;    /* slate-900 - rich dark text */
-  --color-text-secondary: #475569;  /* slate-600 - readable secondary */
-  --color-text-muted: #94a3b8;      /* slate-400 */
+  /* Inverse colors */
+  --color-inverse-surface: #1e293b;
+  --color-inverse-on-surface: #f1f5f9;
+  --color-inverse-primary: #93c5fd;
 
-  --color-border: #cbd5e1;          /* slate-300 - visible borders */
-  --color-border-light: #e2e8f0;    /* slate-200 */
+  /* Shadow color */
+  --color-shadow: rgb(0 0 0 / 0.15);
 
-  /* Sidebar stays dark in light mode for strong contrast */
-  --color-sidebar-bg: #0f172a;      /* slate-900 */
-  --color-sidebar-hover: #1e293b;   /* slate-800 */
-  --color-sidebar-active: #334155;  /* slate-700 */
-  --color-sidebar-text: #f8fafc;    /* slate-50 */
-  --color-sidebar-text-muted: #94a3b8; /* slate-400 */
+  /* Scrim */
+  --color-scrim: rgb(0 0 0 / 0.32);
+
+  /* Legacy mappings for compatibility */
+  --color-bg-primary: var(--color-surface-container-low);
+  --color-bg-secondary: var(--color-surface-container);
+  --color-bg-card: var(--color-surface);
+  --color-bg-hover: var(--color-surface-container-high);
+  --color-text-primary: var(--color-on-surface);
+  --color-text-secondary: var(--color-on-surface-variant);
+  --color-text-muted: var(--color-outline);
+  --color-border: var(--color-outline-variant);
+  --color-border-light: var(--color-surface-variant);
+  --color-accent-blue: var(--color-primary);
+  --color-accent-purple: var(--color-tertiary);
+  --color-accent-cyan: #0891b2;
+
+  /* Navigation Rail / Sidebar (uses inverse surface in M3) */
+  --color-sidebar-bg: var(--color-inverse-surface);
+  --color-sidebar-hover: #334155;
+  --color-sidebar-active: #475569;
+  --color-sidebar-text: var(--color-inverse-on-surface);
+  --color-sidebar-text-muted: #94a3b8;
 }
 
-/* Dark theme - Original rich zinc design */
+/* ==========================================
+ * M3 Dark Theme
+ * ========================================== */
 :root.dark {
-  --color-bg-primary: #09090b;      /* zinc-950 */
-  --color-bg-secondary: #18181b;    /* zinc-900 */
-  --color-bg-card: #1c1c1f;         /* slightly lighter than bg for depth */
-  --color-bg-hover: #27272a;        /* zinc-800 */
+  /* Surface colors with tonal elevation */
+  --color-surface: #0f172a;
+  --color-surface-dim: #0f172a;
+  --color-surface-bright: #334155;
+  --color-surface-container-lowest: #020617;
+  --color-surface-container-low: #0f172a;
+  --color-surface-container: #1e293b;
+  --color-surface-container-high: #334155;
+  --color-surface-container-highest: #475569;
+  --color-surface-variant: #334155;
+  --color-on-surface: #f1f5f9;
+  --color-on-surface-variant: #cbd5e1;
+  --color-outline: #64748b;
+  --color-outline-variant: #475569;
 
-  --color-text-primary: #fafafa;    /* zinc-50 */
-  --color-text-secondary: #a1a1aa;  /* zinc-400 */
-  --color-text-muted: #71717a;      /* zinc-500 */
+  /* Inverse colors */
+  --color-inverse-surface: #e2e8f0;
+  --color-inverse-on-surface: #1e293b;
+  --color-inverse-primary: #1d4ed8;
 
-  --color-border: #3f3f46;          /* zinc-700 */
-  --color-border-light: #52525b;    /* zinc-600 */
+  /* Shadow color */
+  --color-shadow: rgb(0 0 0 / 0.3);
 
-  --color-sidebar-bg: #09090b;      /* zinc-950 */
-  --color-sidebar-hover: #18181b;   /* zinc-900 */
-  --color-sidebar-active: #27272a;  /* zinc-800 */
-  --color-sidebar-text: #fafafa;    /* zinc-50 */
-  --color-sidebar-text-muted: #a1a1aa; /* zinc-400 */
+  /* Scrim */
+  --color-scrim: rgb(0 0 0 / 0.6);
+
+  /* Override primary/secondary for dark theme */
+  --color-primary: #93c5fd;
+  --color-on-primary: #1e3a5f;
+  --color-primary-container: #1e40af;
+  --color-on-primary-container: #dbeafe;
+
+  --color-secondary: #cbd5e1;
+  --color-on-secondary: #1e293b;
+  --color-secondary-container: #334155;
+  --color-on-secondary-container: #e2e8f0;
+
+  --color-tertiary: #c4b5fd;
+  --color-on-tertiary: #4c1d95;
+  --color-tertiary-container: #5b21b6;
+  --color-on-tertiary-container: #ede9fe;
+
+  --color-error: #fca5a5;
+  --color-on-error: #7f1d1d;
+  --color-error-container: #991b1b;
+  --color-on-error-container: #fee2e2;
+
+  /* Legacy mappings for compatibility */
+  --color-bg-primary: var(--color-surface-container-low);
+  --color-bg-secondary: var(--color-surface-container);
+  --color-bg-card: var(--color-surface-container);
+  --color-bg-hover: var(--color-surface-container-high);
+  --color-text-primary: var(--color-on-surface);
+  --color-text-secondary: var(--color-on-surface-variant);
+  --color-text-muted: var(--color-outline);
+  --color-border: var(--color-outline-variant);
+  --color-border-light: var(--color-surface-variant);
+  --color-accent-blue: var(--color-primary);
+  --color-accent-purple: var(--color-tertiary);
+  --color-accent-cyan: #22d3ee;
+
+  /* Navigation Rail / Sidebar */
+  --color-sidebar-bg: var(--color-surface-container-lowest);
+  --color-sidebar-hover: var(--color-surface-container);
+  --color-sidebar-active: var(--color-surface-container-high);
+  --color-sidebar-text: var(--color-on-surface);
+  --color-sidebar-text-muted: var(--color-outline);
 }
 
-/* Base styles */
+/* ==========================================
+ * Base Styles
+ * ========================================== */
 * {
   box-sizing: border-box;
 }
@@ -70,13 +193,18 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* M3 uses Roboto, but Inter is a good web alternative */
+  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  color: var(--color-on-surface);
   min-height: 100vh;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* M3 Typography - Body Large */
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
 }
 
 #root {
@@ -84,72 +212,263 @@ body {
   display: flex;
 }
 
-/* Card shadows - more pronounced for depth */
-.light .card-shadow,
-.light .bg-bg-card {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+/* ==========================================
+ * M3 Elevation System (Shadow + Surface Tint)
+ * ========================================== */
+
+/* Level 0 - Flat */
+.elevation-0 {
+  box-shadow: none;
 }
 
-.dark .card-shadow,
-.dark .bg-bg-card {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+/* Level 1 - Cards, Elevated buttons */
+.elevation-1,
+.light .bg-bg-card,
+.light .bg-surface {
+  box-shadow:
+    0 1px 2px 0 var(--color-shadow),
+    0 1px 3px 1px rgba(0, 0, 0, 0.05);
 }
 
-/* Light mode cards get subtle lift on hover */
+/* Level 2 - Navigation bar, Bottom sheets */
+.elevation-2 {
+  box-shadow:
+    0 1px 2px 0 var(--color-shadow),
+    0 2px 6px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Level 3 - FAB, Extended FAB */
+.elevation-3 {
+  box-shadow:
+    0 4px 8px 3px rgba(0, 0, 0, 0.1),
+    0 1px 3px 0 var(--color-shadow);
+}
+
+/* Level 4 - Menus */
+.elevation-4 {
+  box-shadow:
+    0 6px 10px 4px rgba(0, 0, 0, 0.1),
+    0 2px 3px 0 var(--color-shadow);
+}
+
+/* Level 5 - Dialogs, Modals */
+.elevation-5 {
+  box-shadow:
+    0 8px 12px 6px rgba(0, 0, 0, 0.1),
+    0 4px 4px 0 var(--color-shadow);
+}
+
+/* Dark mode uses tonal elevation (surface tint) instead of heavy shadows */
+.dark .bg-bg-card,
+.dark .bg-surface {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Hover states with subtle lift */
 .light .bg-bg-card:hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 2px 4px 0 var(--color-shadow),
+    0 2px 6px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Scrollbar styling - Light (slate-based) */
-.light ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.dark .bg-bg-card:hover {
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.3);
 }
 
-.light ::-webkit-scrollbar-track {
-  background: #e2e8f0;  /* slate-200 */
+/* ==========================================
+ * M3 State Layer (for interactive elements)
+ * ========================================== */
+.state-layer {
+  position: relative;
 }
 
-.light ::-webkit-scrollbar-thumb {
-  background: #94a3b8;  /* slate-400 */
-  border-radius: 4px;
+.state-layer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
-.light ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;  /* slate-500 */
+.state-layer:hover::before {
+  opacity: 0.08; /* M3 hover state */
 }
 
-/* Scrollbar styling - Dark (zinc-based) */
-.dark ::-webkit-scrollbar,
+.state-layer:focus-visible::before {
+  opacity: 0.12; /* M3 focus state */
+}
+
+.state-layer:active::before {
+  opacity: 0.12; /* M3 pressed state */
+}
+
+/* ==========================================
+ * Scrollbar Styling
+ * ========================================== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
+.light ::-webkit-scrollbar-track {
+  background: var(--color-surface-container);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: var(--color-outline);
+  border-radius: var(--radius-full);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-on-surface-variant);
+}
+
 .dark ::-webkit-scrollbar-track,
 ::-webkit-scrollbar-track {
-  background: #18181b;  /* zinc-900 */
+  background: var(--color-surface-container);
 }
 
 .dark ::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;  /* zinc-700 */
-  border-radius: 4px;
+  background: var(--color-outline-variant);
+  border-radius: var(--radius-full);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;  /* zinc-600 */
+  background: var(--color-outline);
 }
 
-/* Focus ring */
+/* ==========================================
+ * Focus Ring (M3 Style)
+ * ========================================== */
 *:focus-visible {
-  outline: 2px solid var(--color-accent-blue);
+  outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* Selection */
+/* ==========================================
+ * Selection
+ * ========================================== */
 ::selection {
-  background-color: var(--color-accent-blue);
-  color: white;
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+/* ==========================================
+ * M3 Component Utilities
+ * ========================================== */
+
+/* Filled Button */
+.btn-filled {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-full);
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-filled:hover {
+  box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* Tonal Button */
+.btn-tonal {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  border-radius: var(--radius-full);
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Outlined Button */
+.btn-outlined {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-full);
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Text Button */
+.btn-text {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  padding: 10px 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* M3 Card */
+.card-elevated {
+  background-color: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+}
+
+.card-filled {
+  background-color: var(--color-surface-container-highest);
+  border-radius: var(--radius-md);
+}
+
+.card-outlined {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+}
+
+/* M3 Chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chip-assist {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  color: var(--color-on-surface);
+}
+
+.chip-filter {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.chip-input {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  color: var(--color-on-surface);
+}
+
+/* M3 Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  background-color: var(--color-error);
+  color: var(--color-on-error);
+}
+
+/* M3 Divider */
+.divider {
+  height: 1px;
+  background-color: var(--color-outline-variant);
 }
