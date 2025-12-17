@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Layout } from './components/layout/Layout';
 import { StrategicCommandCenter } from './components/dashboard/StrategicCommandCenter';
 import { PortfolioHub } from './components/dashboard/PortfolioHub';
@@ -12,8 +13,9 @@ import './index.css';
 
 function App() {
   return (
-    <AppProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <ThemeProvider>
+      <AppProvider>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<StrategicCommandCenter />} />
@@ -28,8 +30,9 @@ function App() {
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
-      </BrowserRouter>
-    </AppProvider>
+        </BrowserRouter>
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronRight, Search, Bell, Sparkles } from 'lucide-react';
+import { ThemeToggle } from '../shared/ThemeToggle';
 
 interface BreadcrumbItem {
   label: string;
@@ -75,6 +76,9 @@ export const Header: React.FC = () => {
           <Sparkles className="w-4 h-4" />
           <span className="text-sm font-medium">AI Lens</span>
         </button>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Notifications */}
         <button className="relative p-2 text-text-secondary hover:text-text-primary transition-colors">
