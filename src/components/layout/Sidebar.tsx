@@ -24,8 +24,8 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => (
     className={({ isActive }) =>
       `flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
         isActive
-          ? 'bg-white/10 text-white'
-          : 'text-zinc-400 hover:bg-white/5 hover:text-white'
+          ? 'bg-sidebar-active text-sidebar-text'
+          : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text'
       }`
     }
   >
@@ -36,16 +36,16 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => (
 
 export const Sidebar: React.FC = () => {
   return (
-    <aside className="w-64 min-h-screen bg-zinc-950 border-r border-zinc-800 flex flex-col">
+    <aside className="w-64 min-h-screen bg-sidebar-bg border-r border-sidebar-active flex flex-col">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-zinc-800">
+      <div className="px-6 py-5 border-b border-sidebar-active">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-accent-blue rounded-lg flex items-center justify-center">
             <Target className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-white">
-            Strat<span className="text-blue-500">OS</span>{' '}
-            <span className="text-zinc-500 font-normal">AI</span>
+          <span className="text-xl font-bold text-sidebar-text">
+            Strat<span className="text-accent-blue">OS</span>{' '}
+            <span className="text-sidebar-text-muted font-normal">AI</span>
           </span>
         </div>
       </div>
@@ -78,8 +78,8 @@ export const Sidebar: React.FC = () => {
           label="AI Insights Center"
         />
 
-        <div className="pt-4 mt-4 border-t border-zinc-800">
-          <p className="px-4 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+        <div className="pt-4 mt-4 border-t border-sidebar-active">
+          <p className="px-4 py-2 text-xs font-semibold text-sidebar-text-muted uppercase tracking-wider">
             Data
           </p>
           <NavItem
@@ -94,8 +94,8 @@ export const Sidebar: React.FC = () => {
           />
         </div>
 
-        <div className="pt-4 mt-4 border-t border-zinc-800">
-          <p className="px-4 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+        <div className="pt-4 mt-4 border-t border-sidebar-active">
+          <p className="px-4 py-2 text-xs font-semibold text-sidebar-text-muted uppercase tracking-wider">
             Manage
           </p>
           <NavItem
@@ -112,14 +112,14 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* User Profile */}
-      <div className="px-4 py-4 border-t border-zinc-800">
+      <div className="px-4 py-4 border-t border-sidebar-active">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-accent-purple flex items-center justify-center">
             <span className="text-white font-medium">JD</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">Jane Doe</p>
-            <p className="text-xs text-zinc-500 truncate">PMO Director</p>
+            <p className="text-sm font-medium text-sidebar-text truncate">Jane Doe</p>
+            <p className="text-xs text-sidebar-text-muted truncate">PMO Director</p>
           </div>
         </div>
       </div>

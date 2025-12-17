@@ -13,52 +13,53 @@
 }
 
 /*
- * shadcn-inspired design system
- * Using proper contrast ratios for accessibility
+ * Theme system with rich visual depth
+ * Dark mode: Original zinc/slate design
+ * Light mode: Warm slate with depth, not flat white
  */
 
-/* Light theme */
+/* Light theme - Slate-based with depth */
 :root,
 :root.light {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-bg-card: #ffffff;
-  --color-bg-hover: #f3f4f6;
+  --color-bg-primary: #f8fafc;      /* slate-50 - subtle gray, not pure white */
+  --color-bg-secondary: #f1f5f9;    /* slate-100 - slightly darker for contrast */
+  --color-bg-card: #ffffff;         /* pure white cards pop against slate bg */
+  --color-bg-hover: #e2e8f0;        /* slate-200 */
 
-  --color-text-primary: #09090b;
-  --color-text-secondary: #71717a;
-  --color-text-muted: #a1a1aa;
+  --color-text-primary: #0f172a;    /* slate-900 - rich dark text */
+  --color-text-secondary: #475569;  /* slate-600 - readable secondary */
+  --color-text-muted: #94a3b8;      /* slate-400 */
 
-  --color-border: #e4e4e7;
-  --color-border-light: #f4f4f5;
+  --color-border: #cbd5e1;          /* slate-300 - visible borders */
+  --color-border-light: #e2e8f0;    /* slate-200 */
 
-  /* Sidebar stays dark in light mode for contrast (like shadcn dashboard) */
-  --color-sidebar-bg: #09090b;
-  --color-sidebar-hover: #18181b;
-  --color-sidebar-active: #27272a;
-  --color-sidebar-text: #fafafa;
-  --color-sidebar-text-muted: #a1a1aa;
+  /* Sidebar stays dark in light mode for strong contrast */
+  --color-sidebar-bg: #0f172a;      /* slate-900 */
+  --color-sidebar-hover: #1e293b;   /* slate-800 */
+  --color-sidebar-active: #334155;  /* slate-700 */
+  --color-sidebar-text: #f8fafc;    /* slate-50 */
+  --color-sidebar-text-muted: #94a3b8; /* slate-400 */
 }
 
-/* Dark theme */
+/* Dark theme - Original rich zinc design */
 :root.dark {
-  --color-bg-primary: #09090b;
-  --color-bg-secondary: #0a0a0b;
-  --color-bg-card: #09090b;
-  --color-bg-hover: #18181b;
+  --color-bg-primary: #09090b;      /* zinc-950 */
+  --color-bg-secondary: #18181b;    /* zinc-900 */
+  --color-bg-card: #1c1c1f;         /* slightly lighter than bg for depth */
+  --color-bg-hover: #27272a;        /* zinc-800 */
 
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
+  --color-text-primary: #fafafa;    /* zinc-50 */
+  --color-text-secondary: #a1a1aa;  /* zinc-400 */
+  --color-text-muted: #71717a;      /* zinc-500 */
 
-  --color-border: #27272a;
-  --color-border-light: #3f3f46;
+  --color-border: #3f3f46;          /* zinc-700 */
+  --color-border-light: #52525b;    /* zinc-600 */
 
-  --color-sidebar-bg: #09090b;
-  --color-sidebar-hover: #18181b;
-  --color-sidebar-active: #27272a;
-  --color-sidebar-text: #fafafa;
-  --color-sidebar-text-muted: #a1a1aa;
+  --color-sidebar-bg: #09090b;      /* zinc-950 */
+  --color-sidebar-hover: #18181b;   /* zinc-900 */
+  --color-sidebar-active: #27272a;  /* zinc-800 */
+  --color-sidebar-text: #fafafa;    /* zinc-50 */
+  --color-sidebar-text-muted: #a1a1aa; /* zinc-400 */
 }
 
 /* Base styles */
@@ -83,35 +84,42 @@ body {
   display: flex;
 }
 
-/* Card shadows */
-.light .card-shadow {
+/* Card shadows - more pronounced for depth */
+.light .card-shadow,
+.light .bg-bg-card {
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
-.dark .card-shadow {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+.dark .card-shadow,
+.dark .bg-bg-card {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
 }
 
-/* Scrollbar styling - Light */
+/* Light mode cards get subtle lift on hover */
+.light .bg-bg-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Scrollbar styling - Light (slate-based) */
 .light ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .light ::-webkit-scrollbar-track {
-  background: #f4f4f5;
+  background: #e2e8f0;  /* slate-200 */
 }
 
 .light ::-webkit-scrollbar-thumb {
-  background: #d4d4d8;
+  background: #94a3b8;  /* slate-400 */
   border-radius: 4px;
 }
 
 .light ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1aa;
+  background: #64748b;  /* slate-500 */
 }
 
-/* Scrollbar styling - Dark */
+/* Scrollbar styling - Dark (zinc-based) */
 .dark ::-webkit-scrollbar,
 ::-webkit-scrollbar {
   width: 8px;
@@ -120,18 +128,18 @@ body {
 
 .dark ::-webkit-scrollbar-track,
 ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: #18181b;  /* zinc-900 */
 }
 
 .dark ::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #3f3f46;  /* zinc-700 */
   border-radius: 4px;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #52525b;  /* zinc-600 */
 }
 
 /* Focus ring */
