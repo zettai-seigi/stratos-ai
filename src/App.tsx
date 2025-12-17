@@ -5,6 +5,8 @@ import { Layout } from './components/layout/Layout';
 import { StrategicCommandCenter } from './components/dashboard/StrategicCommandCenter';
 import { PortfolioHub } from './components/dashboard/PortfolioHub';
 import { OperationalDashboard } from './components/dashboard/OperationalDashboard';
+import { StrategyHubPage } from './pages/StrategyHubPage';
+import { AIInsightsPage } from './pages/AIInsightsPage';
 import { ExportPage } from './pages/ExportPage';
 import { ImportPage } from './pages/ImportPage';
 import { ResourcesPage } from './pages/ResourcesPage';
@@ -19,11 +21,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<StrategicCommandCenter />} />
-            <Route path="strategy" element={<StrategicCommandCenter />} />
+            <Route path="strategy" element={<StrategyHubPage />} />
             <Route path="portfolio" element={<PortfolioHub />} />
             <Route path="execution" element={<OperationalDashboard />} />
             <Route path="execution/:projectId" element={<OperationalDashboard />} />
-            <Route path="insights" element={<StrategicCommandCenter />} />
+            <Route path="insights" element={<AIInsightsPage />} />
             <Route path="export" element={<ExportPage />} />
             <Route path="import" element={<ImportPage />} />
             <Route path="resources" element={<ResourcesPage />} />
