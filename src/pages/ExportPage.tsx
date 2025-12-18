@@ -1,8 +1,8 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { generateExcelTemplate, exportFullData } from '../utils/excelExport';
+import { generateExcelTemplate, exportFullData, exportStrategicCascade } from '../utils/excelExport';
 import { Button } from '@/components/ui/button';
-import { Download, FileSpreadsheet, Database, CheckCircle, Info, Upload } from 'lucide-react';
+import { Download, FileSpreadsheet, Database, CheckCircle, Info, Upload, GitBranch, Layers } from 'lucide-react';
 
 export const ExportPage: React.FC = () => {
   const { state } = useApp();
@@ -15,6 +15,16 @@ export const ExportPage: React.FC = () => {
     exportFullData(state);
   };
 
+  const handleExportCascade = () => {
+    exportStrategicCascade(state);
+  };
+
+  // Calculate some summary stats
+  const greenProjects = state.projects.filter(p => p.ragStatus === 'green').length;
+  const amberProjects = state.projects.filter(p => p.ragStatus === 'amber').length;
+  const redProjects = state.projects.filter(p => p.ragStatus === 'red').length;
+  const completedTasks = state.tasks.filter(t => t.kanbanStatus === 'done').length;
+
   return (
     <div className="w-full space-y-6">
       {/* Header */}
@@ -22,7 +32,7 @@ export const ExportPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Export Data</h1>
           <p className="text-text-secondary mt-1">
-            Export your BSC structure as a template or create a full backup.
+            Export your portfolio data in various formats for reporting or offline editing.
           </p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
@@ -35,38 +45,46 @@ export const ExportPage: React.FC = () => {
       <div className="bg-bg-card rounded-xl border border-border p-5">
         <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <Database className="w-5 h-5 text-accent-blue" />
-          Current Data Summary
+          Current Portfolio Summary
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <div className="p-3 bg-bg-hover rounded-lg text-center">
             <p className="text-2xl font-bold text-text-primary">{state.pillars.length}</p>
-            <p className="text-sm text-text-muted">Pillars</p>
+            <p className="text-xs text-text-muted">Pillars</p>
           </div>
           <div className="p-3 bg-bg-hover rounded-lg text-center">
             <p className="text-2xl font-bold text-text-primary">{state.kpis.length}</p>
-            <p className="text-sm text-text-muted">KPIs</p>
+            <p className="text-xs text-text-muted">KPIs</p>
           </div>
           <div className="p-3 bg-bg-hover rounded-lg text-center">
             <p className="text-2xl font-bold text-text-primary">{state.initiatives.length}</p>
-            <p className="text-sm text-text-muted">Initiatives</p>
+            <p className="text-xs text-text-muted">Initiatives</p>
           </div>
           <div className="p-3 bg-bg-hover rounded-lg text-center">
             <p className="text-2xl font-bold text-text-primary">{state.projects.length}</p>
-            <p className="text-sm text-text-muted">Projects</p>
+            <p className="text-xs text-text-muted">Projects</p>
           </div>
           <div className="p-3 bg-bg-hover rounded-lg text-center">
-            <p className="text-2xl font-bold text-text-primary">{state.tasks.length}</p>
-            <p className="text-sm text-text-muted">Tasks</p>
+            <p className="text-2xl font-bold text-rag-green">{greenProjects}</p>
+            <p className="text-xs text-text-muted">On Track</p>
           </div>
           <div className="p-3 bg-bg-hover rounded-lg text-center">
-            <p className="text-2xl font-bold text-text-primary">{state.resources.length}</p>
-            <p className="text-sm text-text-muted">Resources</p>
+            <p className="text-2xl font-bold text-rag-amber">{amberProjects}</p>
+            <p className="text-xs text-text-muted">At Risk</p>
+          </div>
+          <div className="p-3 bg-bg-hover rounded-lg text-center">
+            <p className="text-2xl font-bold text-rag-red">{redProjects}</p>
+            <p className="text-xs text-text-muted">Critical</p>
+          </div>
+          <div className="p-3 bg-bg-hover rounded-lg text-center">
+            <p className="text-2xl font-bold text-text-primary">{completedTasks}/{state.tasks.length}</p>
+            <p className="text-xs text-text-muted">Tasks Done</p>
           </div>
         </div>
       </div>
 
       {/* Export Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Template Export */}
         <div className="bg-bg-card rounded-xl border border-border p-5">
           <div className="flex items-start gap-4 mb-6">
@@ -75,24 +93,25 @@ export const ExportPage: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-text-primary">
-                Export Execution Template
+                Import Template
               </h3>
               <p className="text-sm text-text-secondary mt-1">
-                Generate an Excel template with your BSC structure pre-populated.
-                Use this to add new Projects and Tasks offline.
+                Structured Excel for adding new Projects & Tasks offline.
               </p>
             </div>
           </div>
 
           <div className="space-y-3 mb-6">
-            <h4 className="text-sm font-medium text-text-primary">Template includes:</h4>
+            <h4 className="text-sm font-medium text-text-primary">Includes:</h4>
             <div className="space-y-2">
               {[
-                'Strategy Pillars (read-only reference)',
-                'Initiatives with BSC linkage (read-only)',
-                'Resources list (read-only)',
-                'Projects sheet with Initiative dropdown',
-                'Tasks sheet with Project & Assignee dropdowns',
+                'Instructions & Work ID guide',
+                'Reference sheets (Pillars, Initiatives, Resources)',
+                'Existing Projects with Work IDs',
+                'Projects input with dropdowns',
+                'Tasks input with dropdowns',
+                'Dept/Category code reference',
+                'Portfolio summary dashboard',
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-text-secondary">
                   <CheckCircle className="w-4 h-4 text-rag-green" />
@@ -111,6 +130,52 @@ export const ExportPage: React.FC = () => {
           </Button>
         </div>
 
+        {/* Strategic Cascade */}
+        <div className="bg-bg-card rounded-xl border border-border p-5">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="p-3 bg-accent-cyan/20 rounded-lg">
+              <GitBranch className="w-6 h-6 text-accent-cyan" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">
+                Strategic Cascade
+              </h3>
+              <p className="text-sm text-text-secondary mt-1">
+                Golden Thread view - hierarchy from Strategy to Execution.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <h4 className="text-sm font-medium text-text-primary">Includes:</h4>
+            <div className="space-y-2">
+              {[
+                'Hierarchical cascade view',
+                'Pillar → Initiative → Project → Task',
+                'Work IDs for all projects',
+                'RAG status at each level',
+                'Budget & completion tracking',
+                'Owner/Manager assignments',
+                'Perfect for board presentations',
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm text-text-secondary">
+                  <CheckCircle className="w-4 h-4 text-accent-cyan" />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            onClick={handleExportCascade}
+            variant="secondary"
+            className="w-full"
+          >
+            <Download className="w-4 h-4" />
+            Download Cascade
+          </Button>
+        </div>
+
         {/* Full Backup */}
         <div className="bg-bg-card rounded-xl border border-border p-5">
           <div className="flex items-start gap-4 mb-6">
@@ -119,24 +184,25 @@ export const ExportPage: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-text-primary">
-                Export Full Backup
+                Full Data Backup
               </h3>
               <p className="text-sm text-text-secondary mt-1">
-                Download all your data as an Excel file for backup or migration purposes.
+                Complete export with IDs for backup or migration.
               </p>
             </div>
           </div>
 
           <div className="space-y-3 mb-6">
-            <h4 className="text-sm font-medium text-text-primary">Backup includes:</h4>
+            <h4 className="text-sm font-medium text-text-primary">Includes:</h4>
             <div className="space-y-2">
               {[
-                'All Strategy Pillars with IDs',
+                'All Pillars with UUIDs',
                 'All KPIs with pillar linkage',
-                'All Initiatives with full details',
-                'All Projects with status and budgets',
+                'All Initiatives with owners',
+                'All Projects with Work IDs',
                 'All Tasks with assignments',
-                'All Resources',
+                'All Resources with departments',
+                'Summary sheet with counts',
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-text-secondary">
                   <CheckCircle className="w-4 h-4 text-accent-purple" />
@@ -157,16 +223,29 @@ export const ExportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Info Box */}
-      <div className="flex items-start gap-3 p-4 bg-accent-blue/10 rounded-lg border border-accent-blue/30">
-        <Info className="w-5 h-5 text-accent-blue flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-text-secondary">
-          <p className="font-medium text-accent-blue mb-1">Strategic Cascade Workflow</p>
-          <p>
-            The template ensures your Projects and Tasks are always aligned with your
-            Balanced Scorecard. Users can only select from pre-defined Initiatives
-            and Resources, maintaining the "Golden Thread" from strategy to execution.
-          </p>
+      {/* Info Boxes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-start gap-3 p-4 bg-accent-blue/10 rounded-lg border border-accent-blue/30">
+          <Layers className="w-5 h-5 text-accent-blue flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-text-secondary">
+            <p className="font-medium text-accent-blue mb-1">Work ID System</p>
+            <p>
+              Projects are coded using the format <code className="text-accent-blue bg-accent-blue/20 px-1 rounded">DEPT-YY-CATEGORY-SEQ</code>.
+              Example: <code className="text-accent-blue bg-accent-blue/20 px-1 rounded">IT-25-GROW-001</code> means IT department,
+              FY2025, Growth category, sequence #1.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 p-4 bg-accent-cyan/10 rounded-lg border border-accent-cyan/30">
+          <Info className="w-5 h-5 text-accent-cyan flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-text-secondary">
+            <p className="font-medium text-accent-cyan mb-1">Data Validation</p>
+            <p>
+              The import template includes dropdown lists for Initiatives, Resources, Departments,
+              and Categories to ensure data integrity. Work IDs are auto-generated on import.
+            </p>
+          </div>
         </div>
       </div>
     </div>
