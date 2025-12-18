@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Initiative, StrategyPillar } from '../../types';
-import { RAGBadge } from '../shared';
+import { RAGBadge, Modal } from '../shared';
 import { Diamond } from 'lucide-react';
+import { InitiativeForm } from '../forms/InitiativeForm';
 
 interface InitiativeRoadmapProps {
   initiatives: Initiative[];
@@ -12,6 +14,21 @@ export const InitiativeRoadmap: React.FC<InitiativeRoadmapProps> = ({
   initiatives,
   pillars,
 }) => {
+  const navigate = useNavigate();
+  const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleInitiativeClick = (initiative: Initiative) => {
+    setSelectedInitiative(initiative);
+    setIsModalOpen(true);
+  };
+
+  const handleNavigateToPortfolio = () => {
+    if (selectedInitiative) {
+      navigate(`/portfolio?pillar=${selectedInitiative.pillarId}`);
+      setIsModalOpen(false);
+    }
+  };
   // Calculate timeline range
   const allDates = initiatives.flatMap((i) => [new Date(i.startDate), new Date(i.endDate)]);
   const minDate = new Date(Math.min(...allDates.map((d) => d.getTime())));
@@ -123,16 +140,20 @@ export const InitiativeRoadmap: React.FC<InitiativeRoadmapProps> = ({
               const progress = getProgress(initiative);
 
               return (
-                <div key={initiative.id} className="flex items-center py-2 hover:bg-bg-hover/50">
+                <div
+                  key={initiative.id}
+                  onClick={() => handleInitiativeClick(initiative)}
+                  className="flex items-center py-2 hover:bg-bg-hover/50 cursor-pointer group"
+                >
                   <div className="w-48 flex-shrink-0 px-3 pl-8">
-                    <span className="text-sm text-text-secondary truncate block">
+                    <span className="text-sm text-text-secondary truncate block group-hover:text-accent-blue transition-colors">
                       {initiative.name}
                     </span>
                   </div>
                   <div className="flex-1 relative h-6">
                     {/* Progress bar */}
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 h-4 bg-accent-blue/30 rounded-full"
+                      className="absolute top-1/2 -translate-y-1/2 h-4 bg-accent-blue/30 rounded-full group-hover:bg-accent-blue/40 transition-colors"
                       style={{ left: `${startPos}%`, width: `${width}%` }}
                     >
                       {/* Actual progress */}
@@ -173,6 +194,22 @@ export const InitiativeRoadmap: React.FC<InitiativeRoadmapProps> = ({
           </React.Fragment>
         ))}
       </div>
+
+      {/* Initiative Edit Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={selectedInitiative ? `Edit Initiative: ${selectedInitiative.name}` : 'Initiative'}
+        size="lg"
+      >
+        {selectedInitiative && (
+          <InitiativeForm
+            initiative={selectedInitiative}
+            onClose={() => setIsModalOpen(false)}
+            onNavigate={handleNavigateToPortfolio}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

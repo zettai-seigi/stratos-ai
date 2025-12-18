@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Initiative, Project, StrategyPillar, Resource } from '../../types';
-import { RAGStatusLabel } from '../shared';
+import { RAGStatusLabel, Modal } from '../shared';
+import { InitiativeForm } from '../forms/InitiativeForm';
 import { formatCurrency } from '../../utils/calculations';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info } from 'lucide-react';
 
 interface DataGridProps {
   initiatives: Initiative[];
@@ -20,6 +21,8 @@ export const DataGrid: React.FC<DataGridProps> = ({
 }) => {
   const navigate = useNavigate();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
+  const [showRiskTooltip, setShowRiskTooltip] = useState<string | null>(null);
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -40,17 +43,41 @@ export const DataGrid: React.FC<DataGridProps> = ({
   const calculateAIRiskScore = (initiative: Initiative, initiativeProjects: Project[]) => {
     // Simulated AI risk score calculation
     let score = 50;
-    if (initiative.ragStatus === 'red') score += 30;
-    if (initiative.ragStatus === 'amber') score += 15;
+    const factors: string[] = [];
+
+    if (initiative.ragStatus === 'red') {
+      score += 30;
+      factors.push('Initiative marked as critical (Red status)');
+    } else if (initiative.ragStatus === 'amber') {
+      score += 15;
+      factors.push('Initiative at risk (Amber status)');
+    }
 
     const budgetVariance = ((initiative.spentBudget - initiative.budget) / initiative.budget) * 100;
-    if (budgetVariance > 10) score += 20;
-    if (budgetVariance > 0) score += 10;
+    if (budgetVariance > 10) {
+      score += 20;
+      factors.push(`Budget overrun: ${budgetVariance.toFixed(0)}% over budget`);
+    } else if (budgetVariance > 0) {
+      score += 10;
+      factors.push(`Budget variance: ${budgetVariance.toFixed(0)}% over budget`);
+    }
 
     const redProjects = initiativeProjects.filter((p) => p.ragStatus === 'red').length;
-    score += redProjects * 10;
+    if (redProjects > 0) {
+      score += redProjects * 10;
+      factors.push(`${redProjects} project(s) in critical status`);
+    }
 
-    return Math.min(100, Math.max(0, score));
+    const amberProjects = initiativeProjects.filter((p) => p.ragStatus === 'amber').length;
+    if (amberProjects > 0) {
+      factors.push(`${amberProjects} project(s) at risk`);
+    }
+
+    if (factors.length === 0) {
+      factors.push('No significant risk factors detected');
+    }
+
+    return { score: Math.min(100, Math.max(0, score)), factors };
   };
 
   return (
@@ -90,13 +117,13 @@ export const DataGrid: React.FC<DataGridProps> = ({
               );
               const isExpanded = expandedRows.has(initiative.id);
               const budgetVariance = initiative.spentBudget - initiative.budget;
-              const aiRiskScore = calculateAIRiskScore(initiative, initiativeProjects);
+              const { score: aiRiskScore, factors: riskFactors } = calculateAIRiskScore(initiative, initiativeProjects);
 
               return (
                 <React.Fragment key={initiative.id}>
                   {/* Initiative Row */}
                   <tr
-                    className="border-b border-border hover:bg-bg-hover cursor-pointer"
+                    className="border-b border-border hover:bg-bg-hover cursor-pointer group"
                     onClick={() => toggleRow(initiative.id)}
                   >
                     <td className="px-4 py-3">
@@ -109,6 +136,16 @@ export const DataGrid: React.FC<DataGridProps> = ({
                         <span className="text-sm font-medium text-text-primary">
                           {initiative.name}
                         </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingInitiative(initiative);
+                          }}
+                          className="p-1 text-text-muted hover:text-accent-blue opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Edit Initiative"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-text-secondary">
@@ -118,26 +155,56 @@ export const DataGrid: React.FC<DataGridProps> = ({
                       {getProjectCount(initiative.id)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <RAGStatusLabel status={initiative.ragStatus} />
+                      <RAGStatusLabel
+                        status={initiative.ragStatus}
+                        onClick={() => {
+                          setEditingInitiative(initiative);
+                        }}
+                      />
                     </td>
                     <td
-                      className={`px-4 py-3 text-right text-sm font-medium ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingInitiative(initiative);
+                      }}
+                      className={`px-4 py-3 text-right text-sm font-medium cursor-pointer hover:underline ${
                         budgetVariance > 0 ? 'text-rag-red' : 'text-rag-green'
                       }`}
                     >
                       {budgetVariance > 0 ? '+' : ''}
                       {formatCurrency(budgetVariance)}
                     </td>
-                    <td
-                      className={`px-4 py-3 text-center text-sm font-medium ${
-                        aiRiskScore > 70
-                          ? 'text-rag-red'
-                          : aiRiskScore > 50
-                          ? 'text-rag-amber'
-                          : 'text-rag-green'
-                      }`}
-                    >
-                      {aiRiskScore}
+                    <td className="px-4 py-3 text-center relative">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowRiskTooltip(showRiskTooltip === initiative.id ? null : initiative.id);
+                        }}
+                        className={`inline-flex items-center gap-1 text-sm font-medium cursor-pointer hover:underline ${
+                          aiRiskScore > 70
+                            ? 'text-rag-red'
+                            : aiRiskScore > 50
+                            ? 'text-rag-amber'
+                            : 'text-rag-green'
+                        }`}
+                      >
+                        {aiRiskScore}
+                        <Info className="w-3.5 h-3.5" />
+                      </div>
+                      {/* Risk Tooltip */}
+                      {showRiskTooltip === initiative.id && (
+                        <div className="absolute right-0 top-full mt-1 z-50 w-64 p-3 bg-bg-card border border-border rounded-lg shadow-lg text-left">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className={`w-4 h-4 ${aiRiskScore > 70 ? 'text-rag-red' : aiRiskScore > 50 ? 'text-rag-amber' : 'text-rag-green'}`} />
+                            <span className="text-sm font-semibold text-text-primary">Risk Score: {aiRiskScore}</span>
+                          </div>
+                          <div className="space-y-1">
+                            {riskFactors.map((factor, idx) => (
+                              <p key={idx} className="text-xs text-text-secondary">• {factor}</p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
 
@@ -182,6 +249,25 @@ export const DataGrid: React.FC<DataGridProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Initiative Edit Modal */}
+      <Modal
+        isOpen={!!editingInitiative}
+        onClose={() => setEditingInitiative(null)}
+        title="Edit Initiative"
+        size="lg"
+      >
+        {editingInitiative && (
+          <InitiativeForm
+            initiative={editingInitiative}
+            onClose={() => setEditingInitiative(null)}
+            onNavigate={() => {
+              setEditingInitiative(null);
+              navigate(`/portfolio?pillar=${editingInitiative.pillarId}`);
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

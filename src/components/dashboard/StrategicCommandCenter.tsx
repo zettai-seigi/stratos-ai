@@ -1,59 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { useAI } from '../../context/AIContext';
 import { PillarCard } from '../strategy/PillarCard';
 import { InitiativeHeatmap } from '../strategy/InitiativeHeatmap';
-import { calculateStrategicHealth } from '../../utils/calculations';
-import { AlertTriangle, TrendingUp, Target } from 'lucide-react';
-
-// AI-generated insights based on data (simulated)
-const generateAIInsights = (pillarId: string): string => {
-  const insights: Record<string, string> = {
-    'pillar-1': 'Trend indicates hitting 18% by year-end.',
-    'pillar-2': 'Correlation detected between recent support ticket volume spikes and NPS drop.',
-    'pillar-3': 'Supply chain automation project ahead of schedule.',
-    'pillar-4': 'High risk of attrition in Data Science teams due to project overload (See: Project Beta).',
-  };
-  return insights[pillarId] || 'No insights available.';
-};
+import { AlertTriangle, TrendingUp, Target, ArrowRight, Sparkles, Loader2, RefreshCw, Settings } from 'lucide-react';
 
 export const StrategicCommandCenter: React.FC = () => {
-  const { state, getKPIsByPillar, getInitiativesByPillar } = useApp();
+  const navigate = useNavigate();
+  const { state, getKPIsByPillar } = useApp();
   const { pillars, initiatives } = state;
+  const { isConfigured, isLoading, getExecutiveSummary, getPillarInsight, refreshAnalysis } = useAI();
 
-  const overallHealth = calculateStrategicHealth(state);
   const atRiskInitiatives = initiatives.filter((i) => i.ragStatus === 'red' || i.ragStatus === 'amber');
-
-  // Generate executive summary
-  const generateExecutiveSummary = () => {
-    const greenPillars = pillars.filter((p) => p.ragStatus === 'green').length;
-    const redPillars = pillars.filter((p) => p.ragStatus === 'red');
-    const amberPillars = pillars.filter((p) => p.ragStatus === 'amber');
-
-    let summary = `Overall strategy health is marked ${overallHealth.toUpperCase()}. `;
-
-    if (greenPillars > 0) {
-      const greenPillar = pillars.find((p) => p.ragStatus === 'green');
-      const greenKPIs = greenPillar ? getKPIsByPillar(greenPillar.id) : [];
-      if (greenKPIs.length > 0) {
-        const kpi = greenKPIs[0];
-        const percentage = Math.round((kpi.currentValue / kpi.targetValue) * 100);
-        summary += `${greenPillar?.name} goals are exceeding targets (${percentage}%). `;
-      }
-    }
-
-    if (amberPillars.length > 0 || redPillars.length > 0) {
-      const problematic = [...redPillars, ...amberPillars][0];
-      const problematicInitiatives = getInitiativesByPillar(problematic.id);
-      if (problematicInitiatives.length > 0) {
-        const atRisk = problematicInitiatives.find((i) => i.ragStatus !== 'green');
-        if (atRisk) {
-          summary += `The '${atRisk.name}' initiative is flagged high-risk. `;
-        }
-      }
-    }
-
-    return summary;
-  };
+  const greenPillarsCount = pillars.filter((p) => p.ragStatus === 'green').length;
 
   return (
     <div className="w-full space-y-6">
@@ -70,15 +30,50 @@ export const StrategicCommandCenter: React.FC = () => {
       </div>
 
       {/* AI Executive Summary */}
-      <div className="bg-bg-card rounded-xl border border-border p-5">
+      <div
+        onClick={() => navigate('/insights')}
+        className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+      >
         <div className="flex items-start gap-3">
           <div className="p-2 bg-accent-purple/20 rounded-lg">
-            <AlertTriangle className="w-5 h-5 text-accent-purple" />
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 text-accent-purple animate-spin" />
+            ) : (
+              <Sparkles className="w-5 h-5 text-accent-purple" />
+            )}
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-accent-purple mb-1">AI Executive Summary</h3>
-            <p className="text-text-primary">{generateExecutiveSummary()}</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-sm font-semibold text-accent-purple">AI Executive Summary</h3>
+              {!isConfigured && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/settings');
+                  }}
+                  className="text-xs text-accent-purple/70 hover:text-accent-purple flex items-center gap-1"
+                >
+                  <Settings className="w-3 h-3" /> Configure API
+                </button>
+              )}
+              {isConfigured && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    refreshAnalysis(true);
+                  }}
+                  className="text-xs text-accent-purple/70 hover:text-accent-purple flex items-center gap-1"
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+                </button>
+              )}
+            </div>
+            <p className="text-text-primary">
+              {isLoading ? 'Analyzing organizational data...' : getExecutiveSummary()}
+            </p>
           </div>
+          <ArrowRight className="w-5 h-5 text-accent-purple opacity-0 group-hover:opacity-100 transition-opacity mt-1" />
         </div>
       </div>
 
@@ -93,7 +88,7 @@ export const StrategicCommandCenter: React.FC = () => {
                 key={pillar.id}
                 pillar={pillar}
                 kpis={getKPIsByPillar(pillar.id)}
-                aiInsight={generateAIInsights(pillar.id)}
+                aiInsight={getPillarInsight(pillar.id)}
               />
             ))}
         </div>
@@ -104,39 +99,57 @@ export const StrategicCommandCenter: React.FC = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-accent-blue/20 rounded-lg">
-              <Target className="w-5 h-5 text-accent-blue" />
+        <div
+          onClick={() => navigate('/portfolio')}
+          className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-accent-blue/20 rounded-lg">
+                <Target className="w-5 h-5 text-accent-blue" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{initiatives.length}</p>
+                <p className="text-sm text-text-secondary">Active Initiatives</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary">{initiatives.length}</p>
-              <p className="text-sm text-text-secondary">Active Initiatives</p>
-            </div>
+            <ArrowRight className="w-5 h-5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rag-amber/20 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-rag-amber" />
+        <div
+          onClick={() => navigate('/portfolio?filter=at-risk')}
+          className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rag-amber/20 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-rag-amber" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{atRiskInitiatives.length}</p>
+                <p className="text-sm text-text-secondary">At Risk Initiatives</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary">{atRiskInitiatives.length}</p>
-              <p className="text-sm text-text-secondary">At Risk Initiatives</p>
-            </div>
+            <ArrowRight className="w-5 h-5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rag-green/20 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-rag-green" />
+        <div
+          onClick={() => navigate('/strategy')}
+          className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rag-green/20 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-rag-green" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">
+                  {greenPillarsCount}/{pillars.length}
+                </p>
+                <p className="text-sm text-text-secondary">Pillars On Track</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary">
-                {pillars.filter((p) => p.ragStatus === 'green').length}/{pillars.length}
-              </p>
-              <p className="text-sm text-text-secondary">Pillars On Track</p>
-            </div>
+            <ArrowRight className="w-5 h-5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ScatterChart,
   Scatter,
@@ -10,6 +11,8 @@ import {
   Cell,
 } from 'recharts';
 import { Initiative, StrategyPillar, RAGStatus } from '../../types';
+import { Modal } from '../shared';
+import { InitiativeForm } from '../forms/InitiativeForm';
 
 interface InitiativeHeatmapProps {
   initiatives: Initiative[];
@@ -17,11 +20,13 @@ interface InitiativeHeatmapProps {
 }
 
 interface HeatmapDataPoint {
+  id: string;
   name: string;
   strategicImportance: number;
   executionHealth: number;
   budget: number;
   ragStatus: RAGStatus;
+  pillarId: string;
   pillarName: string;
 }
 
@@ -44,6 +49,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         <p className="text-sm text-text-secondary capitalize">
           Status: {data.ragStatus}
         </p>
+        <p className="text-xs text-accent-blue mt-2">Click to view/edit</p>
       </div>
     );
   }
@@ -54,6 +60,10 @@ export const InitiativeHeatmap: React.FC<InitiativeHeatmapProps> = ({
   initiatives,
   pillars,
 }) => {
+  const navigate = useNavigate();
+  const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // Transform initiatives to heatmap data
   const data: HeatmapDataPoint[] = initiatives.map((init) => {
     const pillar = pillars.find((p) => p.id === init.pillarId);
@@ -71,14 +81,31 @@ export const InitiativeHeatmap: React.FC<InitiativeHeatmapProps> = ({
     if (budgetVariance > 100) executionHealth -= 2;
 
     return {
+      id: init.id,
       name: init.name,
       strategicImportance: Math.max(1, Math.min(10, strategicImportance + Math.random() * 2)),
       executionHealth: Math.max(1, Math.min(10, executionHealth + Math.random() * 2)),
       budget: init.budget,
       ragStatus: init.ragStatus,
+      pillarId: init.pillarId,
       pillarName: pillar?.name || 'Unknown',
     };
   });
+
+  const handleDotClick = (dataPoint: HeatmapDataPoint) => {
+    const initiative = initiatives.find((i) => i.id === dataPoint.id);
+    if (initiative) {
+      setSelectedInitiative(initiative);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleNavigateToPortfolio = () => {
+    if (selectedInitiative) {
+      navigate(`/portfolio?pillar=${selectedInitiative.pillarId}`);
+      setIsModalOpen(false);
+    }
+  };
 
   return (
     <div className="bg-bg-card rounded-xl border border-border p-5">
@@ -130,7 +157,15 @@ export const InitiativeHeatmap: React.FC<InitiativeHeatmapProps> = ({
               name="Budget"
             />
             <Tooltip content={<CustomTooltip />} />
-            <Scatter data={data}>
+            <Scatter
+              data={data}
+              onClick={(_, index) => {
+                if (index !== undefined && data[index]) {
+                  handleDotClick(data[index]);
+                }
+              }}
+              cursor="pointer"
+            >
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
@@ -138,6 +173,7 @@ export const InitiativeHeatmap: React.FC<InitiativeHeatmapProps> = ({
                   fillOpacity={0.7}
                   stroke={ragColors[entry.ragStatus]}
                   strokeWidth={2}
+                  className="cursor-pointer hover:opacity-100 transition-opacity"
                 />
               ))}
             </Scatter>
@@ -158,6 +194,22 @@ export const InitiativeHeatmap: React.FC<InitiativeHeatmapProps> = ({
           <span className="text-sm text-text-secondary">Critical</span>
         </div>
       </div>
+
+      {/* Initiative Edit Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={selectedInitiative ? `Edit Initiative: ${selectedInitiative.name}` : 'Initiative'}
+        size="lg"
+      >
+        {selectedInitiative && (
+          <InitiativeForm
+            initiative={selectedInitiative}
+            onClose={() => setIsModalOpen(false)}
+            onNavigate={handleNavigateToPortfolio}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

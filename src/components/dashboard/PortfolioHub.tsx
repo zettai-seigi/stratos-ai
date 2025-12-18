@@ -13,16 +13,42 @@ export const PortfolioHub: React.FC = () => {
 
   // Filter by pillar if specified
   const pillarFilter = searchParams.get('pillar');
-  const filteredInitiatives = pillarFilter
+  const statusFilter = searchParams.get('filter');
+
+  // Apply pillar filter
+  let filteredInitiatives = pillarFilter
     ? initiatives.filter((i) => i.pillarId === pillarFilter)
     : initiatives;
 
-  const filteredProjects = pillarFilter
+  // Apply status filter (at-risk = red or amber)
+  if (statusFilter === 'at-risk') {
+    filteredInitiatives = filteredInitiatives.filter(
+      (i) => i.ragStatus === 'red' || i.ragStatus === 'amber'
+    );
+  }
+
+  let filteredProjects = pillarFilter
     ? projects.filter((p) => {
         const initiative = initiatives.find((i) => i.id === p.initiativeId);
         return initiative?.pillarId === pillarFilter;
       })
     : projects;
+
+  // Filter projects by at-risk initiatives
+  if (statusFilter === 'at-risk') {
+    const atRiskInitiativeIds = filteredInitiatives.map((i) => i.id);
+    filteredProjects = filteredProjects.filter(
+      (p) => atRiskInitiativeIds.includes(p.initiativeId) || p.ragStatus === 'red' || p.ragStatus === 'amber'
+    );
+  }
+
+  // Filter to only show projects at risk (red status)
+  if (statusFilter === 'projects-at-risk') {
+    filteredProjects = filteredProjects.filter((p) => p.ragStatus === 'red');
+    // Also filter initiatives to only those that have red projects
+    const initiativeIdsWithRedProjects = [...new Set(filteredProjects.map((p) => p.initiativeId))];
+    filteredInitiatives = filteredInitiatives.filter((i) => initiativeIdsWithRedProjects.includes(i.id));
+  }
 
   const filteredPillar = pillarFilter
     ? pillars.find((p) => p.id === pillarFilter)
@@ -39,6 +65,18 @@ export const PortfolioHub: React.FC = () => {
               <span className="text-text-secondary font-normal">
                 {' '}
                 - {filteredPillar.name}
+              </span>
+            )}
+            {statusFilter === 'at-risk' && (
+              <span className="text-rag-amber font-normal">
+                {' '}
+                - At Risk Initiatives
+              </span>
+            )}
+            {statusFilter === 'projects-at-risk' && (
+              <span className="text-rag-red font-normal">
+                {' '}
+                - Projects at Risk
               </span>
             )}
           </h1>

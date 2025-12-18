@@ -1,10 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/shared';
-import { RefreshCw, Database, AlertTriangle, Info, Settings } from 'lucide-react';
+import { RefreshCw, Database, AlertTriangle, Info, Settings, Sparkles, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { getAPIKey, setAPIKey, removeAPIKey, clearAICache, analyzeWithAI } from '../services/aiService';
 
 export const SettingsPage: React.FC = () => {
   const { state, resetToSeedData } = useApp();
+
+  // AI Configuration state
+  const [apiKey, setApiKeyState] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+  const [testMessage, setTestMessage] = useState('');
+
+  useEffect(() => {
+    const savedKey = getAPIKey();
+    if (savedKey) {
+      setApiKeyState(savedKey);
+      setIsConfigured(true);
+    }
+  }, []);
+
+  const handleSaveApiKey = () => {
+    if (apiKey.trim()) {
+      setAPIKey(apiKey.trim());
+      setIsConfigured(true);
+      setTestResult(null);
+    }
+  };
+
+  const handleRemoveApiKey = () => {
+    if (confirm('Remove the API key? AI features will be disabled.')) {
+      removeAPIKey();
+      setApiKeyState('');
+      setIsConfigured(false);
+      setTestResult(null);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    if (!apiKey.trim()) return;
+
+    setIsTesting(true);
+    setTestResult(null);
+    setTestMessage('');
+
+    try {
+      // Save the key first
+      setAPIKey(apiKey.trim());
+
+      // Try to analyze with the API
+      await analyzeWithAI(state, apiKey.trim(), true);
+
+      setTestResult('success');
+      setTestMessage('Connection successful! AI analysis is working.');
+      setIsConfigured(true);
+    } catch (error) {
+      setTestResult('error');
+      setTestMessage(error instanceof Error ? error.message : 'Connection failed');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleClearAICache = () => {
+    clearAICache();
+    alert('AI cache cleared. Next analysis will fetch fresh data.');
+  };
 
   const handleResetData = () => {
     if (confirm('Are you sure you want to reset all data to the demo dataset? This cannot be undone.')) {
@@ -34,6 +98,95 @@ export const SettingsPage: React.FC = () => {
         <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
           <Settings className="w-5 h-5 text-accent-cyan" />
           <span className="text-sm text-text-secondary">Configuration</span>
+        </div>
+      </div>
+
+      {/* AI Configuration */}
+      <div className="w-full bg-bg-card rounded-xl border border-border p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <Sparkles className="w-5 h-5 text-accent-purple" />
+          <h2 className="text-lg font-semibold text-text-primary">AI Configuration</h2>
+          {isConfigured && (
+            <span className="flex items-center gap-1 text-xs text-rag-green bg-rag-green/10 px-2 py-1 rounded-full">
+              <CheckCircle className="w-3 h-3" /> Connected
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              Claude API Key
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={apiKey}
+                  onChange={(e) => setApiKeyState(e.target.value)}
+                  placeholder="sk-ant-api03-..."
+                  className="w-full px-3 py-2 pr-10 bg-bg-primary border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple"
+                />
+                <button
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                >
+                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <Button
+                onClick={handleTestConnection}
+                variant="secondary"
+                disabled={!apiKey.trim() || isTesting}
+              >
+                {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test'}
+              </Button>
+              <Button
+                onClick={handleSaveApiKey}
+                disabled={!apiKey.trim()}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+
+          {testResult && (
+            <div className={`flex items-center gap-2 p-3 rounded-lg ${
+              testResult === 'success' ? 'bg-rag-green/10 text-rag-green' : 'bg-rag-red/10 text-rag-red'
+            }`}>
+              {testResult === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+              <span className="text-sm">{testMessage}</span>
+            </div>
+          )}
+
+          <div className="p-3 bg-accent-purple/10 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-accent-purple mt-0.5" />
+              <div className="text-xs text-text-secondary space-y-1">
+                <p>Get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-accent-purple hover:underline">console.anthropic.com</a></p>
+                <p>The API key is stored locally in your browser and used to power AI insights, executive summaries, and project suggestions.</p>
+              </div>
+            </div>
+          </div>
+
+          {isConfigured && (
+            <div className="flex gap-2 pt-2 border-t border-border">
+              <Button
+                onClick={handleClearAICache}
+                variant="secondary"
+                size="sm"
+              >
+                Clear AI Cache
+              </Button>
+              <Button
+                onClick={handleRemoveApiKey}
+                variant="danger"
+                size="sm"
+              >
+                Remove API Key
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

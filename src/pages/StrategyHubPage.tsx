@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { RAGBadge } from '../components/shared';
 import {
@@ -13,7 +14,8 @@ import {
   DollarSign,
   Users,
   Settings,
-  GraduationCap
+  GraduationCap,
+  ArrowRight
 } from 'lucide-react';
 import { StrategyPillar, StrategicKPI } from '../types';
 
@@ -118,9 +120,10 @@ interface PillarSectionProps {
   kpis: StrategicKPI[];
   initiativeCount: number;
   onEditKPI: (kpi: StrategicKPI) => void;
+  onViewInitiatives?: () => void;
 }
 
-const PillarSection: React.FC<PillarSectionProps> = ({ pillar, kpis, initiativeCount, onEditKPI }) => {
+const PillarSection: React.FC<PillarSectionProps> = ({ pillar, kpis, initiativeCount, onEditKPI, onViewInitiatives }) => {
   const [expanded, setExpanded] = useState(true);
 
   const getTrend = (current: number, previous: number) => {
@@ -159,7 +162,15 @@ const PillarSection: React.FC<PillarSectionProps> = ({ pillar, kpis, initiativeC
         </div>
         <div className="flex items-center gap-4">
           <RAGBadge status={pillar.ragStatus} showLabel />
-          <span className="text-sm text-text-muted">{initiativeCount} initiatives</span>
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewInitiatives?.();
+            }}
+            className="text-sm text-accent-blue hover:text-accent-blue/80 cursor-pointer hover:underline"
+          >
+            {initiativeCount} initiatives
+          </span>
           {expanded ? (
             <ChevronDown className="w-5 h-5 text-text-muted" />
           ) : (
@@ -241,9 +252,11 @@ const PillarSection: React.FC<PillarSectionProps> = ({ pillar, kpis, initiativeC
 };
 
 export const StrategyHubPage: React.FC = () => {
+  const navigate = useNavigate();
   const { state, getKPIsByPillar, getInitiativesByPillar, dispatch } = useApp();
   const { pillars } = state;
   const [editingKPI, setEditingKPI] = useState<StrategicKPI | null>(null);
+  const pillarRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSaveKPI = (kpi: StrategicKPI) => {
     dispatch({ type: 'UPDATE_KPI', payload: kpi });
@@ -273,30 +286,83 @@ export const StrategyHubPage: React.FC = () => {
 
       {/* BSC Health Summary */}
       <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <p className="text-sm text-text-secondary mb-1">Total Pillars</p>
-          <p className="text-3xl font-bold text-text-primary">{pillars.length}</p>
-        </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-rag-green"></div>
-            <p className="text-sm text-text-secondary">On Track</p>
+        <div
+          onClick={() => navigate('/portfolio')}
+          className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-text-secondary mb-1">Total Pillars</p>
+              <p className="text-3xl font-bold text-text-primary">{pillars.length}</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <p className="text-3xl font-bold text-rag-green mt-1">{bscHealth.green}</p>
         </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-rag-amber"></div>
-            <p className="text-sm text-text-secondary">At Risk</p>
+        <div
+          onClick={() => {
+            const greenPillar = pillars.find(p => p.ragStatus === 'green');
+            if (greenPillar && pillarRefs.current[greenPillar.id]) {
+              pillarRefs.current[greenPillar.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+          className={`bg-bg-card rounded-xl border border-border p-5 ${bscHealth.green > 0 ? 'cursor-pointer hover:bg-bg-hover' : ''} transition-colors group`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-rag-green"></div>
+                <p className="text-sm text-text-secondary">On Track</p>
+              </div>
+              <p className="text-3xl font-bold text-rag-green mt-1">{bscHealth.green}</p>
+            </div>
+            {bscHealth.green > 0 && (
+              <ArrowRight className="w-5 h-5 text-rag-green opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
           </div>
-          <p className="text-3xl font-bold text-rag-amber mt-1">{bscHealth.amber}</p>
         </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-rag-red"></div>
-            <p className="text-sm text-text-secondary">Critical</p>
+        <div
+          onClick={() => {
+            const amberPillar = pillars.find(p => p.ragStatus === 'amber');
+            if (amberPillar && pillarRefs.current[amberPillar.id]) {
+              pillarRefs.current[amberPillar.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+          className={`bg-bg-card rounded-xl border border-border p-5 ${bscHealth.amber > 0 ? 'cursor-pointer hover:bg-bg-hover' : ''} transition-colors group`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-rag-amber"></div>
+                <p className="text-sm text-text-secondary">At Risk</p>
+              </div>
+              <p className="text-3xl font-bold text-rag-amber mt-1">{bscHealth.amber}</p>
+            </div>
+            {bscHealth.amber > 0 && (
+              <ArrowRight className="w-5 h-5 text-rag-amber opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
           </div>
-          <p className="text-3xl font-bold text-rag-red mt-1">{bscHealth.red}</p>
+        </div>
+        <div
+          onClick={() => {
+            const redPillar = pillars.find(p => p.ragStatus === 'red');
+            if (redPillar && pillarRefs.current[redPillar.id]) {
+              pillarRefs.current[redPillar.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+          className={`bg-bg-card rounded-xl border border-border p-5 ${bscHealth.red > 0 ? 'cursor-pointer hover:bg-bg-hover' : ''} transition-colors group`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-rag-red"></div>
+                <p className="text-sm text-text-secondary">Critical</p>
+              </div>
+              <p className="text-3xl font-bold text-rag-red mt-1">{bscHealth.red}</p>
+            </div>
+            {bscHealth.red > 0 && (
+              <ArrowRight className="w-5 h-5 text-rag-red opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
         </div>
       </div>
 
@@ -306,13 +372,15 @@ export const StrategyHubPage: React.FC = () => {
         {pillars
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map((pillar) => (
-            <PillarSection
-              key={pillar.id}
-              pillar={pillar}
-              kpis={getKPIsByPillar(pillar.id)}
-              initiativeCount={getInitiativesByPillar(pillar.id).length}
-              onEditKPI={setEditingKPI}
-            />
+            <div key={pillar.id} ref={(el) => { pillarRefs.current[pillar.id] = el; }}>
+              <PillarSection
+                pillar={pillar}
+                kpis={getKPIsByPillar(pillar.id)}
+                initiativeCount={getInitiativesByPillar(pillar.id).length}
+                onEditKPI={setEditingKPI}
+                onViewInitiatives={() => navigate(`/portfolio?pillar=${pillar.id}`)}
+              />
+            </div>
           ))}
       </div>
 

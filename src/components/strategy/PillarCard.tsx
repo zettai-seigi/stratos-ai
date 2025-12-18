@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StrategyPillar, StrategicKPI } from '../../types';
-import { RAGBadge } from '../shared';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { RAGBadge, Modal } from '../shared';
+import { TrendingUp, TrendingDown, Minus, Edit2 } from 'lucide-react';
+import { KPIForm } from '../forms/KPIForm';
 
 interface PillarCardProps {
   pillar: StrategyPillar;
@@ -12,8 +13,17 @@ interface PillarCardProps {
 
 export const PillarCard: React.FC<PillarCardProps> = ({ pillar, kpis, aiInsight }) => {
   const navigate = useNavigate();
+  const [selectedKPI, setSelectedKPI] = useState<StrategicKPI | null>(null);
+  const [isKPIModalOpen, setIsKPIModalOpen] = useState(false);
+
   const primaryKPI = kpis[0];
   const secondaryKPI = kpis[1];
+
+  const handleKPIClick = (kpi: StrategicKPI, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedKPI(kpi);
+    setIsKPIModalOpen(true);
+  };
 
   const borderColorMap = {
     red: 'border-l-rag-red',
@@ -63,13 +73,17 @@ export const PillarCard: React.FC<PillarCardProps> = ({ pillar, kpis, aiInsight 
 
       {/* Primary KPI */}
       {primaryKPI && (
-        <div className="mb-3">
+        <div
+          onClick={(e) => handleKPIClick(primaryKPI, e)}
+          className="mb-3 p-2 -mx-2 rounded-lg hover:bg-bg-hover/50 cursor-pointer transition-colors group"
+        >
           <div className="flex items-center gap-2">
             <span className="text-sm text-text-secondary">{primaryKPI.name}:</span>
             <span className="text-xl font-bold text-text-primary">
               {formatValue(primaryKPI)}
             </span>
             <TrendIcon current={primaryKPI.currentValue} previous={primaryKPI.previousValue} />
+            <Edit2 className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
           </div>
           <span className="text-xs text-text-muted">
             Target: {primaryKPI.unit === '%' ? `${primaryKPI.targetValue}%` : primaryKPI.targetValue}
@@ -79,10 +93,16 @@ export const PillarCard: React.FC<PillarCardProps> = ({ pillar, kpis, aiInsight 
 
       {/* Secondary KPI */}
       {secondaryKPI && (
-        <div className="mb-4 text-sm">
-          <span className="text-text-secondary">{secondaryKPI.name}: </span>
-          <span className="text-text-primary font-medium">{formatValue(secondaryKPI)}</span>
-          <span className="text-text-muted"> (Target: {secondaryKPI.targetValue})</span>
+        <div
+          onClick={(e) => handleKPIClick(secondaryKPI, e)}
+          className="mb-4 text-sm p-2 -mx-2 rounded-lg hover:bg-bg-hover/50 cursor-pointer transition-colors group flex items-center"
+        >
+          <div className="flex-1">
+            <span className="text-text-secondary">{secondaryKPI.name}: </span>
+            <span className="text-text-primary font-medium">{formatValue(secondaryKPI)}</span>
+            <span className="text-text-muted"> (Target: {secondaryKPI.targetValue})</span>
+          </div>
+          <Edit2 className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       )}
 
@@ -94,6 +114,21 @@ export const PillarCard: React.FC<PillarCardProps> = ({ pillar, kpis, aiInsight 
           </p>
         </div>
       )}
+
+      {/* KPI Edit Modal */}
+      <Modal
+        isOpen={isKPIModalOpen}
+        onClose={() => setIsKPIModalOpen(false)}
+        title={selectedKPI ? `Edit KPI: ${selectedKPI.name}` : 'KPI'}
+        size="md"
+      >
+        {selectedKPI && (
+          <KPIForm
+            kpi={selectedKPI}
+            onClose={() => setIsKPIModalOpen(false)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

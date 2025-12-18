@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AIProvider } from './context/AIContext';
 import { Layout } from './components/layout/Layout';
 import { StrategicCommandCenter } from './components/dashboard/StrategicCommandCenter';
 import { PortfolioHub } from './components/dashboard/PortfolioHub';
@@ -17,6 +18,7 @@ function App() {
   return (
     <ThemeProvider>
       <AppProvider>
+        <AIProvider>
         <HashRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
@@ -33,6 +35,7 @@ function App() {
           </Route>
         </Routes>
         </HashRouter>
+        </AIProvider>
       </AppProvider>
     </ThemeProvider>
   );
