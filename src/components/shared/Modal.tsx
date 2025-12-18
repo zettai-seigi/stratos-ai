@@ -52,10 +52,14 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal */}
       <div
-        className={`relative ${sizeClasses[size]} w-full mx-4 bg-bg-card border border-border rounded-xl shadow-2xl`}
+        className={`relative ${sizeClasses[size]} w-full mx-4 border border-border rounded-xl shadow-2xl overflow-hidden`}
+        style={{ backgroundColor: 'var(--cds-layer-02, #393939)' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div
+          className="flex items-center justify-between px-6 py-4 border-b border-border"
+          style={{ backgroundColor: 'var(--cds-layer-02, #393939)' }}
+        >
           <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
           <button
             onClick={onClose}
@@ -66,7 +70,12 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">{children}</div>
+        <div
+          className="px-6 py-4 max-h-[70vh] overflow-y-auto"
+          style={{ backgroundColor: 'var(--cds-layer-02, #393939)' }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
