@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
-import { AppState, Project, Task, ProjectStatus, KanbanStatus } from '../types';
+import { AppState, Project, Task, ProjectStatus, KanbanStatus, DepartmentCode, ProjectCategory, DEPARTMENTS, PROJECT_CATEGORIES } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { generateWorkId, getNextSequenceNumber, getCurrentFiscalYear } from './workId';
 
 export interface ImportValidationResult {
   isValid: boolean;
@@ -97,6 +98,28 @@ const validateAndParseWorkbook = (
       const statusInput = String(row[7] || 'not started').toLowerCase().trim();
       const status = statusMap[statusInput] || 'not_started';
 
+      // Parse department code (column 8) - default to IT if not specified or invalid
+      const deptInput = String(row[8] || 'IT').toUpperCase().trim();
+      const departmentCode: DepartmentCode = Object.keys(DEPARTMENTS).includes(deptInput)
+        ? (deptInput as DepartmentCode)
+        : 'IT';
+
+      // Parse category (column 9) - default to GROW if not specified or invalid
+      const catInput = String(row[9] || 'GROW').toUpperCase().trim();
+      const category: ProjectCategory = Object.keys(PROJECT_CATEGORIES).includes(catInput)
+        ? (catInput as ProjectCategory)
+        : 'GROW';
+
+      // Parse fiscal year (column 10) - default to current fiscal year
+      const fiscalYear = parseNumber(row[10]) || getCurrentFiscalYear();
+
+      // Calculate sequence number for Work ID
+      const allProjectsForSequence = [...currentState.projects, ...projects];
+      const sequenceNumber = getNextSequenceNumber(allProjectsForSequence, departmentCode, fiscalYear, category);
+
+      // Generate Work ID
+      const workId = generateWorkId(departmentCode, fiscalYear, category, sequenceNumber);
+
       projects.push({
         id: uuidv4(),
         initiativeId: initiative.id,
@@ -110,6 +133,11 @@ const validateAndParseWorkbook = (
         completionPercentage: 0,
         budget: parseNumber(row[6]) || 0,
         spentBudget: 0,
+        departmentCode,
+        category,
+        fiscalYear,
+        sequenceNumber,
+        workId,
       });
     }
   } else {

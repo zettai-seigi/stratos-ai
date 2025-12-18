@@ -1,17 +1,29 @@
 import * as XLSX from 'xlsx';
-import { AppState } from '../types';
+import { AppState, DEPARTMENTS, PROJECT_CATEGORIES } from '../types';
 
 export const generateExcelTemplate = (state: AppState): void => {
   const workbook = XLSX.utils.book_new();
 
   // 1. Create hidden Lookups sheet with valid values
+  const departmentCodes = Object.keys(DEPARTMENTS);
+  const categoryCodes = Object.keys(PROJECT_CATEGORIES);
+  const maxLen = Math.max(
+    state.pillars.length,
+    state.initiatives.length,
+    state.resources.length,
+    state.projects.length,
+    departmentCodes.length,
+    categoryCodes.length
+  );
   const lookupsData = [
-    ['Valid_Pillar_Names', 'Valid_Initiative_Names', 'Valid_Resource_Names', 'Valid_Project_Names'],
-    ...Array.from({ length: Math.max(state.pillars.length, state.initiatives.length, state.resources.length, state.projects.length) }).map((_, i) => [
+    ['Valid_Pillar_Names', 'Valid_Initiative_Names', 'Valid_Resource_Names', 'Valid_Project_Names', 'Valid_Departments', 'Valid_Categories'],
+    ...Array.from({ length: maxLen }).map((_, i) => [
       state.pillars[i]?.name || '',
       state.initiatives[i]?.name || '',
       state.resources[i]?.name || '',
       state.projects[i]?.name || '',
+      departmentCodes[i] || '',
+      categoryCodes[i] || '',
     ]),
   ];
   const lookupsSheet = XLSX.utils.aoa_to_sheet(lookupsData);
@@ -68,8 +80,15 @@ export const generateExcelTemplate = (state: AppState): void => {
 
   // 5. Create Resources sheet (read-only reference)
   const resourcesData = [
-    ['Resource Name', 'Role', 'Team', 'Weekly Capacity (Hours)'],
-    ...state.resources.map((r) => [r.name, r.role, r.team, r.weeklyCapacity]),
+    ['Resource Name', 'Role', 'Team', 'Department', 'Weekly Capacity (Hours)', 'Hourly Rate ($)'],
+    ...state.resources.map((r) => [
+      r.name,
+      r.role,
+      r.team,
+      r.departmentCode,
+      r.weeklyCapacity,
+      r.hourlyRate || 75,
+    ]),
   ];
   const resourcesSheet = XLSX.utils.aoa_to_sheet(resourcesData);
   XLSX.utils.book_append_sheet(workbook, resourcesSheet, 'Resources (Reference)');
@@ -85,9 +104,12 @@ export const generateExcelTemplate = (state: AppState): void => {
       'Planned End Date',
       'Budget ($)',
       'Status (Not Started/In Progress/On Hold/Completed/Cancelled)',
+      'Department (FIN/MKT/OPS/IT/HR/SAL/PRD/ENG/LEG/ADM)',
+      'Category (RUN/GROW/TRNS)',
+      'Fiscal Year (e.g., 2025)',
     ],
     // Add some empty rows for input
-    ...Array(20).fill(['', '', '', '', '', '', '', '']),
+    ...Array(20).fill(['', '', '', '', '', '', '', '', '', '', '']),
   ];
   const projectsSheet = XLSX.utils.aoa_to_sheet(projectsData);
 

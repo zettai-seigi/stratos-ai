@@ -13,6 +13,7 @@ import { ImportPage } from './pages/ImportPage';
 import { ResourcesPage } from './pages/ResourcesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { HelpPage } from './pages/HelpPage';
+import { ProjectCharterPage } from './pages/ProjectCharterPage';
 import './index.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="portfolio" element={<PortfolioHub />} />
             <Route path="execution" element={<OperationalDashboard />} />
             <Route path="execution/:projectId" element={<OperationalDashboard />} />
+            <Route path="project/:projectId" element={<ProjectCharterPage />} />
             <Route path="insights" element={<AIInsightsPage />} />
             <Route path="export" element={<ExportPage />} />
             <Route path="import" element={<ImportPage />} />

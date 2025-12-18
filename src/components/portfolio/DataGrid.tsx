@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Initiative, Project, StrategyPillar, Resource } from '../../types';
+import { Initiative, Project, StrategyPillar, Resource, DEPARTMENTS, PROJECT_CATEGORIES } from '../../types';
 import { RAGStatusLabel, Modal, InfoTooltip } from '../shared';
 import { InitiativeForm } from '../forms/InitiativeForm';
 import { formatCurrency } from '../../utils/calculations';
-import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info, FileText } from 'lucide-react';
 
 interface DataGridProps {
   initiatives: Initiative[];
@@ -91,7 +91,10 @@ export const DataGrid: React.FC<DataGridProps> = ({
           <thead>
             <tr className="bg-bg-hover">
               <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                Initiative Name
+                Initiative / Project
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                Work ID
               </th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
                 Linked Strategy Pillar
@@ -165,6 +168,7 @@ export const DataGrid: React.FC<DataGridProps> = ({
                         </button>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-sm text-text-muted">-</td>
                     <td className="px-4 py-3 text-sm text-text-secondary">
                       {getPillarName(initiative.pillarId)}
                     </td>
@@ -229,17 +233,38 @@ export const DataGrid: React.FC<DataGridProps> = ({
                   {isExpanded &&
                     initiativeProjects.map((project) => {
                       const projectBudgetVariance = project.spentBudget - project.budget;
+                      const deptInfo = DEPARTMENTS[project.departmentCode];
                       return (
                         <tr
                           key={project.id}
-                          className="border-b border-border bg-bg-primary hover:bg-bg-hover cursor-pointer"
+                          className="border-b border-border bg-bg-primary hover:bg-bg-hover cursor-pointer group"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/execution/${project.id}`);
                           }}
                         >
                           <td className="px-4 py-3 pl-12">
-                            <span className="text-sm text-text-secondary">{project.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-text-secondary">{project.name}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/project/${project.id}`);
+                                }}
+                                className="p-1 text-text-muted hover:text-accent-blue opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="View Project Charter"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className="px-2 py-0.5 rounded text-xs font-mono font-medium"
+                              style={{ backgroundColor: `${deptInfo?.color}20`, color: deptInfo?.color }}
+                            >
+                              {project.workId}
+                            </span>
                           </td>
                           <td className="px-4 py-3 text-sm text-text-muted">
                             {getPillarName(initiative.pillarId)}

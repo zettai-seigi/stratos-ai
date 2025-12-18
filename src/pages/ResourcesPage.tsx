@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button, Modal } from '../components/shared';
-import { Resource } from '../types';
+import { Resource, DepartmentCode, DEPARTMENTS } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Edit2, Trash2, Users, UsersRound } from 'lucide-react';
+import { Plus, Edit2, Trash2, UsersRound } from 'lucide-react';
 
 const avatarColors = [
   '#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ec4899',
@@ -22,6 +22,8 @@ export const ResourcesPage: React.FC = () => {
     role: '',
     team: '',
     weeklyCapacity: 40,
+    departmentCode: 'IT' as DepartmentCode,
+    hourlyRate: 75,
   });
 
   const handleOpenModal = (resource?: Resource) => {
@@ -33,10 +35,20 @@ export const ResourcesPage: React.FC = () => {
         role: resource.role,
         team: resource.team,
         weeklyCapacity: resource.weeklyCapacity,
+        departmentCode: resource.departmentCode,
+        hourlyRate: resource.hourlyRate || 75,
       });
     } else {
       setEditingResource(null);
-      setFormData({ name: '', email: '', role: '', team: '', weeklyCapacity: 40 });
+      setFormData({
+        name: '',
+        email: '',
+        role: '',
+        team: '',
+        weeklyCapacity: 40,
+        departmentCode: 'IT' as DepartmentCode,
+        hourlyRate: 75,
+      });
     }
     setIsModalOpen(true);
   };
@@ -52,6 +64,8 @@ export const ResourcesPage: React.FC = () => {
       team: formData.team,
       weeklyCapacity: formData.weeklyCapacity,
       avatarColor: editingResource?.avatarColor || avatarColors[Math.floor(Math.random() * avatarColors.length)],
+      departmentCode: formData.departmentCode,
+      hourlyRate: formData.hourlyRate,
     };
 
     if (editingResource) {
@@ -104,6 +118,7 @@ export const ResourcesPage: React.FC = () => {
             .filter((t) => t.assigneeId === resource.id && t.kanbanStatus !== 'done')
             .reduce((sum, t) => sum + t.estimatedHours, 0);
           const utilization = Math.round((totalHours / (resource.weeklyCapacity * 4)) * 100);
+          const deptInfo = DEPARTMENTS[resource.departmentCode];
 
           return (
             <div
@@ -140,6 +155,15 @@ export const ResourcesPage: React.FC = () => {
               </div>
 
               <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Department</span>
+                  <span
+                    className="px-2 py-0.5 rounded text-xs font-medium"
+                    style={{ backgroundColor: `${deptInfo?.color}20`, color: deptInfo?.color }}
+                  >
+                    {deptInfo?.code} - {deptInfo?.name}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-text-muted">Team</span>
                   <span className="text-text-secondary">{resource.team}</span>
@@ -244,16 +268,47 @@ export const ResourcesPage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">
-              Weekly Capacity (Hours)
+              Department *
             </label>
-            <input
-              type="number"
-              value={formData.weeklyCapacity}
-              onChange={(e) => setFormData({ ...formData, weeklyCapacity: Number(e.target.value) })}
-              min={0}
-              max={80}
+            <select
+              value={formData.departmentCode}
+              onChange={(e) => setFormData({ ...formData, departmentCode: e.target.value as DepartmentCode })}
               className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue"
-            />
+            >
+              {Object.values(DEPARTMENTS).map((dept) => (
+                <option key={dept.code} value={dept.code}>
+                  {dept.code} - {dept.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Weekly Capacity (Hours)
+              </label>
+              <input
+                type="number"
+                value={formData.weeklyCapacity}
+                onChange={(e) => setFormData({ ...formData, weeklyCapacity: Number(e.target.value) })}
+                min={0}
+                max={80}
+                className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Hourly Rate ($)
+              </label>
+              <input
+                type="number"
+                value={formData.hourlyRate}
+                onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })}
+                min={0}
+                className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">

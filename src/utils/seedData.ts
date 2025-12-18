@@ -1,4 +1,4 @@
-import { AppState } from '../types';
+import { AppState, DepartmentCode, ProjectCategory } from '../types';
 
 export const seedData: AppState = {
   pillars: [
@@ -125,6 +125,7 @@ export const seedData: AppState = {
       budget: 1500000,
       spentBudget: 1100000,
       ragStatus: 'amber',
+      linkedKpiIds: ['kpi-3', 'kpi-4'],
     },
     {
       id: 'init-2',
@@ -137,6 +138,7 @@ export const seedData: AppState = {
       budget: 3200000,
       spentBudget: 1800000,
       ragStatus: 'green',
+      linkedKpiIds: ['kpi-5', 'kpi-6'],
     },
     {
       id: 'init-3',
@@ -149,6 +151,7 @@ export const seedData: AppState = {
       budget: 800000,
       spentBudget: 650000,
       ragStatus: 'green',
+      linkedKpiIds: ['kpi-1', 'kpi-2'],
     },
     {
       id: 'init-4',
@@ -161,6 +164,7 @@ export const seedData: AppState = {
       budget: 500000,
       spentBudget: 420000,
       ragStatus: 'red',
+      linkedKpiIds: ['kpi-7', 'kpi-8'],
     },
     {
       id: 'init-5',
@@ -173,6 +177,7 @@ export const seedData: AppState = {
       budget: 950000,
       spentBudget: 380000,
       ragStatus: 'amber',
+      linkedKpiIds: ['kpi-4'],
     },
     {
       id: 'init-6',
@@ -185,6 +190,7 @@ export const seedData: AppState = {
       budget: 600000,
       spentBudget: 520000,
       ragStatus: 'green',
+      linkedKpiIds: ['kpi-5'],
     },
   ],
   projects: [
@@ -201,6 +207,11 @@ export const seedData: AppState = {
       completionPercentage: 100,
       budget: 100000,
       spentBudget: 95000,
+      departmentCode: 'IT' as DepartmentCode,
+      category: 'GROW' as ProjectCategory,
+      sequenceNumber: 1,
+      fiscalYear: 2024,
+      workId: 'IT-24-GROW-001',
     },
     {
       id: 'proj-2',
@@ -215,6 +226,11 @@ export const seedData: AppState = {
       completionPercentage: 65,
       budget: 600000,
       spentBudget: 480000,
+      departmentCode: 'IT' as DepartmentCode,
+      category: 'TRNS' as ProjectCategory,
+      sequenceNumber: 1,
+      fiscalYear: 2024,
+      workId: 'IT-24-TRNS-001',
     },
     {
       id: 'proj-3',
@@ -229,6 +245,11 @@ export const seedData: AppState = {
       completionPercentage: 30,
       budget: 200000,
       spentBudget: 180000,
+      departmentCode: 'HR' as DepartmentCode,
+      category: 'RUN' as ProjectCategory,
+      sequenceNumber: 1,
+      fiscalYear: 2024,
+      workId: 'HR-24-RUN-001',
     },
     {
       id: 'proj-4',
@@ -243,6 +264,11 @@ export const seedData: AppState = {
       completionPercentage: 75,
       budget: 1500000,
       spentBudget: 1100000,
+      departmentCode: 'OPS' as DepartmentCode,
+      category: 'TRNS' as ProjectCategory,
+      sequenceNumber: 1,
+      fiscalYear: 2024,
+      workId: 'OPS-24-TRNS-001',
     },
     {
       id: 'proj-5',
@@ -257,6 +283,11 @@ export const seedData: AppState = {
       completionPercentage: 45,
       budget: 800000,
       spentBudget: 350000,
+      departmentCode: 'OPS' as DepartmentCode,
+      category: 'GROW' as ProjectCategory,
+      sequenceNumber: 1,
+      fiscalYear: 2024,
+      workId: 'OPS-24-GROW-001',
     },
     {
       id: 'proj-6',
@@ -271,6 +302,11 @@ export const seedData: AppState = {
       completionPercentage: 90,
       budget: 450000,
       spentBudget: 420000,
+      departmentCode: 'IT' as DepartmentCode,
+      category: 'GROW' as ProjectCategory,
+      sequenceNumber: 2,
+      fiscalYear: 2024,
+      workId: 'IT-24-GROW-002',
     },
     {
       id: 'proj-7',
@@ -285,6 +321,11 @@ export const seedData: AppState = {
       completionPercentage: 50,
       budget: 150000,
       spentBudget: 140000,
+      departmentCode: 'HR' as DepartmentCode,
+      category: 'RUN' as ProjectCategory,
+      sequenceNumber: 2,
+      fiscalYear: 2024,
+      workId: 'HR-24-RUN-002',
     },
     {
       id: 'proj-8',
@@ -299,6 +340,11 @@ export const seedData: AppState = {
       completionPercentage: 55,
       budget: 300000,
       spentBudget: 180000,
+      departmentCode: 'MKT' as DepartmentCode,
+      category: 'GROW' as ProjectCategory,
+      sequenceNumber: 1,
+      fiscalYear: 2024,
+      workId: 'MKT-24-GROW-001',
     },
   ],
   tasks: [
@@ -313,6 +359,7 @@ export const seedData: AppState = {
       dueDate: '2024-04-15',
       estimatedHours: 40,
       actualHours: 38,
+      departmentCode: 'IT' as DepartmentCode,
     },
     {
       id: 'task-2',
@@ -324,6 +371,7 @@ export const seedData: AppState = {
       dueDate: '2024-05-20',
       estimatedHours: 120,
       actualHours: 80,
+      departmentCode: 'IT' as DepartmentCode,
     },
     {
       id: 'task-3',
@@ -335,6 +383,7 @@ export const seedData: AppState = {
       dueDate: '2024-06-01',
       estimatedHours: 80,
       actualHours: 45,
+      departmentCode: 'ENG' as DepartmentCode,
     },
     {
       id: 'task-4',
@@ -346,6 +395,7 @@ export const seedData: AppState = {
       dueDate: '2024-06-15',
       estimatedHours: 60,
       actualHours: 0,
+      departmentCode: 'IT' as DepartmentCode,
     },
     {
       id: 'task-5',
@@ -357,6 +407,7 @@ export const seedData: AppState = {
       dueDate: '2024-04-30',
       estimatedHours: 24,
       actualHours: 28,
+      departmentCode: 'PRD' as DepartmentCode,
     },
     {
       id: 'task-6',
@@ -368,6 +419,7 @@ export const seedData: AppState = {
       dueDate: '2024-05-25',
       estimatedHours: 16,
       actualHours: 12,
+      departmentCode: 'IT' as DepartmentCode,
     },
     {
       id: 'task-7',
@@ -379,6 +431,7 @@ export const seedData: AppState = {
       dueDate: '2024-06-30',
       estimatedHours: 40,
       actualHours: 8,
+      departmentCode: 'HR' as DepartmentCode,
     },
     {
       id: 'task-8',
@@ -390,6 +443,7 @@ export const seedData: AppState = {
       dueDate: '2024-06-10',
       estimatedHours: 32,
       actualHours: 16,
+      departmentCode: 'ENG' as DepartmentCode,
     },
     // Training tasks
     {
@@ -402,6 +456,7 @@ export const seedData: AppState = {
       dueDate: '2024-08-15',
       estimatedHours: 60,
       actualHours: 25,
+      departmentCode: 'HR' as DepartmentCode,
     },
     {
       id: 'task-10',
@@ -413,6 +468,7 @@ export const seedData: AppState = {
       dueDate: '2024-09-01',
       estimatedHours: 20,
       actualHours: 0,
+      departmentCode: 'HR' as DepartmentCode,
     },
     // Warehouse automation tasks
     {
@@ -425,6 +481,7 @@ export const seedData: AppState = {
       dueDate: '2024-06-30',
       estimatedHours: 200,
       actualHours: 180,
+      departmentCode: 'OPS' as DepartmentCode,
     },
     {
       id: 'task-12',
@@ -436,6 +493,7 @@ export const seedData: AppState = {
       dueDate: '2024-08-15',
       estimatedHours: 80,
       actualHours: 50,
+      departmentCode: 'OPS' as DepartmentCode,
     },
     // Analytics tasks
     {
@@ -448,6 +506,7 @@ export const seedData: AppState = {
       dueDate: '2024-05-15',
       estimatedHours: 100,
       actualHours: 95,
+      departmentCode: 'IT' as DepartmentCode,
     },
     {
       id: 'task-14',
@@ -459,6 +518,7 @@ export const seedData: AppState = {
       dueDate: '2024-06-01',
       estimatedHours: 80,
       actualHours: 75,
+      departmentCode: 'IT' as DepartmentCode,
     },
   ],
   resources: [
@@ -470,6 +530,8 @@ export const seedData: AppState = {
       team: 'PMO',
       weeklyCapacity: 40,
       avatarColor: '#3b82f6',
+      departmentCode: 'ADM' as DepartmentCode,
+      hourlyRate: 85,
     },
     {
       id: 'res-2',
@@ -479,6 +541,8 @@ export const seedData: AppState = {
       team: 'Operations',
       weeklyCapacity: 40,
       avatarColor: '#22c55e',
+      departmentCode: 'OPS' as DepartmentCode,
+      hourlyRate: 95,
     },
     {
       id: 'res-3',
@@ -488,6 +552,8 @@ export const seedData: AppState = {
       team: 'Analytics',
       weeklyCapacity: 40,
       avatarColor: '#8b5cf6',
+      departmentCode: 'IT' as DepartmentCode,
+      hourlyRate: 90,
     },
     {
       id: 'res-4',
@@ -497,6 +563,8 @@ export const seedData: AppState = {
       team: 'Human Resources',
       weeklyCapacity: 40,
       avatarColor: '#f59e0b',
+      departmentCode: 'HR' as DepartmentCode,
+      hourlyRate: 80,
     },
     {
       id: 'res-5',
@@ -506,6 +574,8 @@ export const seedData: AppState = {
       team: 'Operations',
       weeklyCapacity: 40,
       avatarColor: '#ec4899',
+      departmentCode: 'OPS' as DepartmentCode,
+      hourlyRate: 75,
     },
     {
       id: 'res-6',
@@ -515,6 +585,8 @@ export const seedData: AppState = {
       team: 'IT',
       weeklyCapacity: 40,
       avatarColor: '#06b6d4',
+      departmentCode: 'IT' as DepartmentCode,
+      hourlyRate: 85,
     },
     {
       id: 'res-7',
@@ -524,6 +596,8 @@ export const seedData: AppState = {
       team: 'Operations',
       weeklyCapacity: 40,
       avatarColor: '#f43f5e',
+      departmentCode: 'OPS' as DepartmentCode,
+      hourlyRate: 70,
     },
     {
       id: 'res-8',
@@ -533,6 +607,8 @@ export const seedData: AppState = {
       team: 'Quality',
       weeklyCapacity: 40,
       avatarColor: '#14b8a6',
+      departmentCode: 'IT' as DepartmentCode,
+      hourlyRate: 65,
     },
     {
       id: 'res-9',
@@ -542,6 +618,8 @@ export const seedData: AppState = {
       team: 'IT Infrastructure',
       weeklyCapacity: 40,
       avatarColor: '#a855f7',
+      departmentCode: 'IT' as DepartmentCode,
+      hourlyRate: 100,
     },
     {
       id: 'res-10',
@@ -551,6 +629,61 @@ export const seedData: AppState = {
       team: 'Engineering',
       weeklyCapacity: 40,
       avatarColor: '#eab308',
+      departmentCode: 'ENG' as DepartmentCode,
+      hourlyRate: 80,
+    },
+  ],
+  functionContributions: [
+    // Project Phoenix (proj-2) contributions
+    {
+      projectId: 'proj-2',
+      departmentCode: 'IT' as DepartmentCode,
+      plannedHours: 240,
+      actualHours: 168,
+      completionPercentage: 70,
+      assignedResourceIds: ['res-6', 'res-8', 'res-9'],
+    },
+    {
+      projectId: 'proj-2',
+      departmentCode: 'ENG' as DepartmentCode,
+      plannedHours: 112,
+      actualHours: 61,
+      completionPercentage: 55,
+      assignedResourceIds: ['res-10'],
+    },
+    {
+      projectId: 'proj-2',
+      departmentCode: 'HR' as DepartmentCode,
+      plannedHours: 40,
+      actualHours: 8,
+      completionPercentage: 20,
+      assignedResourceIds: ['res-4'],
+    },
+    {
+      projectId: 'proj-2',
+      departmentCode: 'PRD' as DepartmentCode,
+      plannedHours: 24,
+      actualHours: 28,
+      completionPercentage: 100,
+      assignedResourceIds: ['res-1'],
+    },
+    // Warehouse Automation (proj-4) contributions
+    {
+      projectId: 'proj-4',
+      departmentCode: 'OPS' as DepartmentCode,
+      plannedHours: 280,
+      actualHours: 230,
+      completionPercentage: 82,
+      assignedResourceIds: ['res-2', 'res-7'],
+    },
+    // Analytics Platform (proj-6) contributions
+    {
+      projectId: 'proj-6',
+      departmentCode: 'IT' as DepartmentCode,
+      plannedHours: 180,
+      actualHours: 170,
+      completionPercentage: 94,
+      assignedResourceIds: ['res-3', 'res-9'],
     },
   ],
 };

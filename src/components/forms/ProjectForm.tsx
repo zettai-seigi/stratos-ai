@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Project, RAGStatus, ProjectStatus } from '../../types';
+import {
+  Project,
+  RAGStatus,
+  ProjectStatus,
+  DepartmentCode,
+  ProjectCategory,
+  DEPARTMENTS,
+  PROJECT_CATEGORIES,
+} from '../../types';
 import { Button } from '../shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ExternalLink } from 'lucide-react';
+import { generateWorkId, getNextSequenceNumber, getCurrentFiscalYear } from '../../utils/workId';
 
 interface ProjectFormProps {
   initiativeId?: string;
@@ -19,7 +28,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   onNavigate,
 }) => {
   const { state, dispatch } = useApp();
-  const { initiatives, resources } = state;
+  const { initiatives, resources, projects } = state;
 
   const [formData, setFormData] = useState({
     initiativeId: project?.initiativeId || initiativeId || '',
@@ -33,10 +42,29 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     completionPercentage: project?.completionPercentage || 0,
     budget: project?.budget || 50000,
     spentBudget: project?.spentBudget || 0,
+    departmentCode: project?.departmentCode || 'IT' as DepartmentCode,
+    category: project?.category || 'GROW' as ProjectCategory,
+    fiscalYear: project?.fiscalYear || getCurrentFiscalYear(),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Calculate sequence number for new projects
+    const sequenceNumber = project?.sequenceNumber || getNextSequenceNumber(
+      projects,
+      formData.departmentCode,
+      formData.fiscalYear,
+      formData.category
+    );
+
+    // Generate work ID
+    const workId = project?.workId || generateWorkId(
+      formData.departmentCode,
+      formData.fiscalYear,
+      formData.category,
+      sequenceNumber
+    );
 
     const projectData: Project = {
       id: project?.id || uuidv4(),
@@ -51,6 +79,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       completionPercentage: formData.completionPercentage,
       budget: formData.budget,
       spentBudget: formData.spentBudget,
+      departmentCode: formData.departmentCode,
+      category: formData.category,
+      fiscalYear: formData.fiscalYear,
+      sequenceNumber,
+      workId,
     };
 
     if (project) {
@@ -69,11 +102,27 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };
 
+  // Preview Work ID
+  const previewWorkId = project?.workId || generateWorkId(
+    formData.departmentCode,
+    formData.fiscalYear,
+    formData.category,
+    getNextSequenceNumber(projects, formData.departmentCode, formData.fiscalYear, formData.category)
+  );
+
   const budgetVariance = formData.spentBudget - formData.budget;
   const budgetPercentage = formData.budget > 0 ? Math.round((formData.spentBudget / formData.budget) * 100) : 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Work ID Preview */}
+      <div className="p-3 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-text-secondary">Work ID:</span>
+          <span className="font-mono font-semibold text-accent-blue">{previewWorkId}</span>
+        </div>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">
           Project Name *
@@ -94,9 +143,62 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         <textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
+          rows={2}
           className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue resize-none"
         />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">
+            Department *
+          </label>
+          <select
+            value={formData.departmentCode}
+            onChange={(e) => setFormData({ ...formData, departmentCode: e.target.value as DepartmentCode })}
+            className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue"
+            disabled={!!project} // Can't change after creation
+          >
+            {Object.values(DEPARTMENTS).map((dept) => (
+              <option key={dept.code} value={dept.code}>
+                {dept.code} - {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">
+            Category *
+          </label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value as ProjectCategory })}
+            className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue"
+            disabled={!!project} // Can't change after creation
+          >
+            {Object.values(PROJECT_CATEGORIES).map((cat) => (
+              <option key={cat.code} value={cat.code}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">
+            Fiscal Year
+          </label>
+          <input
+            type="number"
+            value={formData.fiscalYear}
+            onChange={(e) => setFormData({ ...formData, fiscalYear: Number(e.target.value) })}
+            min={2020}
+            max={2030}
+            className="w-full px-3 py-2 bg-bg-primary border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent-blue"
+            disabled={!!project} // Can't change after creation
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
