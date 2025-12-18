@@ -6,7 +6,7 @@ import { KanbanBoard } from '../execution/KanbanBoard';
 import { RAGStatusLabel, RAGBadge, Button, Modal, InfoTooltip } from '../shared';
 import { TaskForm } from '../forms/TaskForm';
 import { ProjectForm } from '../forms/ProjectForm';
-import { Task, Resource, Project, RAGStatus } from '../../types';
+import { Task, Resource, Project, RAGStatus, DEPARTMENTS, PROJECT_CATEGORIES } from '../../types';
 import {
   FolderKanban,
   AlertTriangle,
@@ -24,6 +24,7 @@ import {
   DollarSign,
   CheckCircle,
   Loader2,
+  FileText,
 } from 'lucide-react';
 
 type TabType = 'overview' | 'execution' | 'team' | 'kpis';
@@ -249,6 +250,8 @@ const ProjectListView: React.FC = () => {
                     const completionPct = projectTasks.length > 0
                       ? Math.round((completedTasks / projectTasks.length) * 100)
                       : 0;
+                    const deptInfo = DEPARTMENTS[project.departmentCode];
+                    const categoryInfo = PROJECT_CATEGORIES[project.category];
 
                     return (
                       <div
@@ -260,13 +263,40 @@ const ProjectListView: React.FC = () => {
                           <div className="flex items-center gap-4 flex-1">
                             <RAGStatusLabel status={project.ragStatus} />
                             <div className="flex-1">
-                              <h4 className="font-medium text-text-primary group-hover:text-accent-blue transition-colors">
-                                {project.name}
-                              </h4>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-medium text-text-primary group-hover:text-accent-blue transition-colors">
+                                  {project.name}
+                                </h4>
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-xs font-mono font-medium"
+                                  style={{ backgroundColor: `${deptInfo?.color}20`, color: deptInfo?.color }}
+                                >
+                                  {project.workId}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/project/${project.id}`);
+                                  }}
+                                  className="p-1 text-text-muted hover:text-accent-blue opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="View Project Charter"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                               <p className="text-sm text-text-muted line-clamp-1">{project.description}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-6">
+                            {/* Category Badge */}
+                            <div className="text-center">
+                              <span
+                                className="px-2 py-0.5 rounded text-xs font-medium"
+                                style={{ backgroundColor: `${categoryInfo?.color}20`, color: categoryInfo?.color }}
+                              >
+                                {categoryInfo?.name}
+                              </span>
+                            </div>
                             {/* Completion */}
                             <div className="text-right">
                               <div className="flex items-center gap-2">
@@ -372,11 +402,11 @@ export const OperationalDashboard: React.FC = () => {
     <div className="w-full space-y-6">
       {/* Back Button */}
       <button
-        onClick={() => navigate('/portfolio')}
+        onClick={() => navigate('/execution')}
         className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm">Back to Portfolio</span>
+        <span className="text-sm">Back to Project List</span>
       </button>
 
       {/* Project Header */}
@@ -384,16 +414,41 @@ export const OperationalDashboard: React.FC = () => {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
+              <span
+                className="px-2 py-0.5 rounded text-xs font-mono font-semibold"
+                style={{ backgroundColor: `${DEPARTMENTS[project.departmentCode]?.color}20`, color: DEPARTMENTS[project.departmentCode]?.color }}
+              >
+                {project.workId}
+              </span>
               <h1 className="text-xl font-bold text-text-primary">{project.name}</h1>
               <RAGStatusLabel status={project.ragStatus} />
             </div>
-            <p className="text-sm text-text-secondary">
-              Initiative: {initiative?.name} | Pillar: {pillar?.name}
-            </p>
+            <div className="flex items-center gap-3 text-sm text-text-secondary">
+              <span>Initiative: {initiative?.name}</span>
+              <span className="text-text-muted">|</span>
+              <span>Pillar: {pillar?.name}</span>
+              <span className="text-text-muted">|</span>
+              <span
+                className="px-1.5 py-0.5 rounded text-xs font-medium"
+                style={{ backgroundColor: `${PROJECT_CATEGORIES[project.category]?.color}20`, color: PROJECT_CATEGORIES[project.category]?.color }}
+              >
+                {PROJECT_CATEGORIES[project.category]?.name}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-bg-hover rounded-lg">
-            <FolderKanban className="w-5 h-5 text-accent-cyan" />
-            <span className="text-sm text-text-secondary">Manager Persona</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/project/${project.id}`)}
+              className="flex items-center gap-2 px-3 py-2 bg-bg-hover rounded-lg hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
+              title="View Project Charter"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="text-sm">Charter</span>
+            </button>
+            <div className="flex items-center gap-2 px-4 py-2 bg-bg-hover rounded-lg">
+              <FolderKanban className="w-5 h-5 text-accent-cyan" />
+              <span className="text-sm text-text-secondary">Manager Persona</span>
+            </div>
           </div>
         </div>
 
