@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAI } from '../../context/AIContext';
 import { KanbanBoard } from '../execution/KanbanBoard';
-import { RAGStatusLabel, RAGBadge, Button, Modal } from '../shared';
+import { RAGStatusLabel, RAGBadge, Button, Modal, InfoTooltip } from '../shared';
 import { TaskForm } from '../forms/TaskForm';
 import { ProjectForm } from '../forms/ProjectForm';
 import { Task, Resource, Project, RAGStatus } from '../../types';
@@ -490,7 +490,22 @@ export const OperationalDashboard: React.FC = () => {
       {activeTab === 'execution' && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-text-primary">Execution Board</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-text-primary">Execution Board</h2>
+              <InfoTooltip
+                content={
+                  <div className="space-y-2">
+                    <p><strong>To Do:</strong> Tasks waiting to be started</p>
+                    <p><strong>In Progress:</strong> Tasks currently being worked on</p>
+                    <p><strong>Blocked:</strong> Tasks that cannot proceed due to dependencies or issues</p>
+                    <p><strong>Done:</strong> Completed tasks</p>
+                    <p className="pt-2 border-t border-border">Drag and drop tasks between columns to update their status.</p>
+                  </div>
+                }
+                position="right"
+                size="lg"
+              />
+            </div>
             <Button onClick={handleAddTask} icon={<FolderKanban className="w-4 h-4" />}>
               Add Task
             </Button>

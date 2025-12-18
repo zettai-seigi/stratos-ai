@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { RAGBadge } from '../components/shared';
+import { RAGBadge, InfoTooltip } from '../components/shared';
 import {
   Target,
   TrendingUp,
@@ -368,7 +368,14 @@ export const StrategyHubPage: React.FC = () => {
 
       {/* Strategy Pillars */}
       <div className="w-full space-y-4">
-        <h2 className="text-lg font-semibold text-text-primary">Strategy Pillars</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-text-primary">Strategy Pillars</h2>
+          <InfoTooltip
+            content="Each pillar contains Key Performance Indicators (KPIs) that measure progress toward strategic goals. Click on a pillar to expand and view/edit its KPIs. KPIs are color-coded: Green (meeting target), Amber (within 10%), Red (below 10%)."
+            position="right"
+            size="lg"
+          />
+        </div>
         {pillars
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map((pillar) => (

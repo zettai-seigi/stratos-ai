@@ -12,6 +12,7 @@ import { ExportPage } from './pages/ExportPage';
 import { ImportPage } from './pages/ImportPage';
 import { ResourcesPage } from './pages/ResourcesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { HelpPage } from './pages/HelpPage';
 import './index.css';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="import" element={<ImportPage />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="help" element={<HelpPage />} />
           </Route>
         </Routes>
         </HashRouter>

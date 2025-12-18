@@ -12,6 +12,7 @@ import {
   Upload,
   Pin,
   PinOff,
+  HelpCircle,
 } from 'lucide-react';
 
 interface NavItemProps {
@@ -181,6 +182,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ expanded, onExpandedChange }) 
             to="/settings"
             icon={<Settings className="w-4 h-4" />}
             label="Settings"
+            collapsed={!showExpanded}
+          />
+          <NavItem
+            to="/help"
+            icon={<HelpCircle className="w-4 h-4" />}
+            label="Help"
             collapsed={!showExpanded}
           />
         </nav>

@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useAI } from '../../context/AIContext';
 import { PillarCard } from '../strategy/PillarCard';
 import { InitiativeHeatmap } from '../strategy/InitiativeHeatmap';
+import { InfoTooltip } from '../shared';
 import { AlertTriangle, TrendingUp, Target, ArrowRight, Sparkles, Loader2, RefreshCw, Settings } from 'lucide-react';
 
 export const StrategicCommandCenter: React.FC = () => {
@@ -45,6 +46,11 @@ export const StrategicCommandCenter: React.FC = () => {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-sm font-semibold text-accent-purple">AI Executive Summary</h3>
+              <InfoTooltip
+                content="AI-generated analysis of your organization's strategic health, highlighting key risks, opportunities, and recommendations. Configure Claude API in Settings to enable."
+                position="bottom"
+                size="md"
+              />
               {!isConfigured && (
                 <button
                   onClick={(e) => {
@@ -79,7 +85,14 @@ export const StrategicCommandCenter: React.FC = () => {
 
       {/* Balanced Scorecard Pillars */}
       <div>
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Balanced Scorecard Pillars</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">Balanced Scorecard Pillars</h2>
+          <InfoTooltip
+            content="The four strategic perspectives: Financial (shareholder value), Customer (satisfaction & retention), Internal Processes (operational excellence), and Learning & Growth (innovation & capability). Each pillar has KPIs and linked initiatives."
+            position="right"
+            size="lg"
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {pillars
             .sort((a, b) => a.displayOrder - b.displayOrder)

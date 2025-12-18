@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Initiative, Project, StrategyPillar, Resource } from '../../types';
-import { RAGStatusLabel, Modal } from '../shared';
+import { RAGStatusLabel, Modal, InfoTooltip } from '../shared';
 import { InitiativeForm } from '../forms/InitiativeForm';
 import { formatCurrency } from '../../utils/calculations';
 import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info } from 'lucide-react';
@@ -106,7 +106,24 @@ export const DataGrid: React.FC<DataGridProps> = ({
                 Budget Variance
               </th>
               <th className="px-4 py-3 text-center text-sm font-medium text-text-secondary">
-                AI Risk Score (0-100)
+                <div className="flex items-center justify-center gap-1">
+                  AI Risk Score (0-100)
+                  <InfoTooltip
+                    title="Risk Score Calculation"
+                    content={
+                      <div className="space-y-1">
+                        <p>Base: 50 points</p>
+                        <p>Red status: +30</p>
+                        <p>Amber status: +15</p>
+                        <p>Budget &gt;10% over: +20</p>
+                        <p>Each red project: +10</p>
+                        <p className="pt-1 border-t border-border mt-1">0-50: Low | 51-70: Medium | 71-100: High</p>
+                      </div>
+                    }
+                    position="bottom"
+                    size="md"
+                  />
+                </div>
               </th>
             </tr>
           </thead>
