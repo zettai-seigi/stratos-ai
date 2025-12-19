@@ -4,6 +4,7 @@ import {
   DragOverlay,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
   MouseSensor,
   TouchSensor,
   useSensor,
@@ -82,6 +83,7 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
 
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   // Configure sensors for drag - use Mouse and Touch sensors
   const sensors = useSensors(
@@ -142,11 +144,18 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
     setActiveId(id);
   };
 
+  // Handle drag over - track hover position
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    setOverId(over ? (over.id as string) : null);
+  };
+
   // Handle drag end - perform the move
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     setActiveId(null);
+    setOverId(null);
 
     if (!over || active.id === over.id) return;
 
@@ -278,6 +287,7 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="bg-bg-secondary rounded-lg border border-border">
@@ -325,13 +335,15 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
         {/* Tree List */}
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           <div className="divide-y divide-border/50">
-            {flattenedTasks.map((task) => (
+            {flattenedTasks.map((task, index) => (
               <SortableTreeItem
                 key={task.id}
                 task={task}
                 allTasks={tasks}
                 isSelected={task.id === selectedTaskId}
                 isExpanded={allExpanded || expandedIds.has(task.id)}
+                isOver={overId === task.id && activeId !== task.id}
+                isDragActive={activeId !== null}
                 onToggleExpand={() => toggleExpand(task.id)}
                 onClick={() => onTaskClick?.(task)}
                 onAddSubtask={onAddTask ? () => onAddTask(task.id) : undefined}
@@ -369,6 +381,8 @@ interface SortableTreeItemProps {
   allTasks: Task[];
   isSelected: boolean;
   isExpanded: boolean;
+  isOver: boolean;
+  isDragActive: boolean;
   onToggleExpand: () => void;
   onClick: () => void;
   onAddSubtask?: () => void;
@@ -380,6 +394,8 @@ const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   allTasks,
   isSelected,
   isExpanded,
+  isOver,
+  isDragActive,
   onToggleExpand,
   onClick,
   onAddSubtask,
@@ -406,20 +422,32 @@ const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 1000 : undefined,
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`
-        group flex items-center gap-2 px-4 py-2
-        ${isDragging ? 'bg-accent-blue/10' : 'hover:bg-bg-tertiary'}
-        ${isSelected ? 'bg-accent-blue/10 border-l-2 border-accent-blue' : ''}
-      `}
-    >
+    <div className="relative">
+      {/* Drop indicator line - shows where item will be placed */}
+      {isOver && (
+        <div
+          className="absolute top-0 left-0 right-0 h-1 bg-accent-blue z-10"
+          style={{ marginLeft: `${task.level * 24 + 16}px` }}
+        >
+          <div className="absolute -left-1 -top-1 w-3 h-3 bg-accent-blue rounded-full" />
+        </div>
+      )}
+
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`
+          group flex items-center gap-2 px-4 py-2 transition-colors
+          ${isDragging ? 'bg-accent-blue/20 shadow-lg' : 'hover:bg-bg-tertiary'}
+          ${isSelected ? 'bg-accent-blue/10 border-l-2 border-accent-blue' : ''}
+          ${isOver ? 'bg-accent-blue/5' : ''}
+        `}
+      >
       {/* Drag Handle */}
       <div
         ref={setActivatorNodeRef}
@@ -522,19 +550,20 @@ const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
         </span>
       )}
 
-      {/* Add Subtask Button */}
-      {onAddSubtask && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddSubtask();
-          }}
-          className="opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-accent-blue transition-all"
-          title="Add subtask"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
-      )}
+        {/* Add Subtask Button */}
+        {onAddSubtask && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddSubtask();
+            }}
+            className="opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-accent-blue transition-all"
+            title="Add subtask"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
