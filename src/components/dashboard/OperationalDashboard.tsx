@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAI } from '../../context/AIContext';
 import { KanbanBoard } from '../execution/KanbanBoard';
+import { WBSTreeView } from '../execution/WBSTreeView';
 import { RAGStatusLabel, RAGBadge, Button, Modal, InfoTooltip } from '../shared';
 import { TaskForm } from '../forms/TaskForm';
 import { ProjectForm } from '../forms/ProjectForm';
@@ -25,9 +26,10 @@ import {
   CheckCircle,
   Loader2,
   FileText,
+  GitBranch,
 } from 'lucide-react';
 
-type TabType = 'overview' | 'execution' | 'team' | 'kpis';
+type TabType = 'overview' | 'execution' | 'wbs' | 'team' | 'kpis';
 
 // Project List Component for when no project is selected
 const ProjectListView: React.FC = () => {
@@ -344,6 +346,7 @@ export const OperationalDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('execution');
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [parentTaskIdForNewTask, setParentTaskIdForNewTask] = useState<string | undefined>();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [selectedTeamMember, setSelectedTeamMember] = useState<Resource | null>(null);
   const [isTeamMemberModalOpen, setIsTeamMemberModalOpen] = useState(false);
@@ -369,13 +372,15 @@ export const OperationalDashboard: React.FC = () => {
     return 'Project is progressing well. No immediate actions required.';
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = (parentTaskId?: string) => {
     setEditingTask(undefined);
+    setParentTaskIdForNewTask(parentTaskId);
     setIsTaskModalOpen(true);
   };
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
+    setParentTaskIdForNewTask(undefined);
     setIsTaskModalOpen(true);
   };
 
@@ -390,7 +395,8 @@ export const OperationalDashboard: React.FC = () => {
 
   const tabs = [
     { id: 'overview' as TabType, label: 'Overview', icon: BarChart3 },
-    { id: 'execution' as TabType, label: 'Execution Board', icon: FolderKanban },
+    { id: 'execution' as TabType, label: 'Kanban Board', icon: FolderKanban },
+    { id: 'wbs' as TabType, label: 'WBS Tree', icon: GitBranch },
     { id: 'team' as TabType, label: 'Team & Resourcing', icon: Users },
     { id: 'kpis' as TabType, label: 'KPIs & Metrics', icon: Target },
   ];
@@ -546,7 +552,7 @@ export const OperationalDashboard: React.FC = () => {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-text-primary">Execution Board</h2>
+              <h2 className="text-lg font-semibold text-text-primary">Kanban Board</h2>
               <InfoTooltip
                 content={
                   <div className="space-y-2">
@@ -561,15 +567,43 @@ export const OperationalDashboard: React.FC = () => {
                 size="lg"
               />
             </div>
-            <Button onClick={handleAddTask} icon={<FolderKanban className="w-4 h-4" />}>
+            <Button onClick={() => handleAddTask()} icon={<FolderKanban className="w-4 h-4" />}>
               Add Task
             </Button>
           </div>
           <KanbanBoard
             tasks={tasks}
             resources={resources}
-            onAddTask={handleAddTask}
+            onAddTask={() => handleAddTask()}
             onEditTask={handleEditTask}
+          />
+        </div>
+      )}
+
+      {activeTab === 'wbs' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-text-primary">Work Breakdown Structure</h2>
+              <InfoTooltip
+                content={
+                  <div className="space-y-2">
+                    <p><strong>WBS Tree View:</strong> Hierarchical task breakdown showing parent-child relationships</p>
+                    <p><strong>Subtasks:</strong> Click + on any task to add a subtask beneath it</p>
+                    <p><strong>Dependencies:</strong> Tasks can depend on other tasks (shown with link icon)</p>
+                    <p><strong>Milestones:</strong> Key deliverables marked with a flag icon</p>
+                    <p className="pt-2 border-t border-border">Click any task to edit its details and WBS configuration.</p>
+                  </div>
+                }
+                position="right"
+                size="lg"
+              />
+            </div>
+          </div>
+          <WBSTreeView
+            projectId={project.id}
+            onTaskClick={handleEditTask}
+            onAddTask={handleAddTask}
           />
         </div>
       )}
@@ -653,14 +687,21 @@ export const OperationalDashboard: React.FC = () => {
       {/* Task Modal */}
       <Modal
         isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        title={editingTask ? 'Edit Task' : 'Add New Task'}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setParentTaskIdForNewTask(undefined);
+        }}
+        title={editingTask ? 'Edit Task' : parentTaskIdForNewTask ? 'Add Subtask' : 'Add New Task'}
         size="lg"
       >
         <TaskForm
           projectId={project.id}
           task={editingTask}
-          onClose={() => setIsTaskModalOpen(false)}
+          parentTaskId={parentTaskIdForNewTask}
+          onClose={() => {
+            setIsTaskModalOpen(false);
+            setParentTaskIdForNewTask(undefined);
+          }}
         />
       </Modal>
 
