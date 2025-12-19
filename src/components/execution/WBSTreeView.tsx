@@ -2,16 +2,20 @@ import React, { useState, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
-  useDraggable,
-  useDroppable,
   DragStartEvent,
   DragEndEvent,
-  DragOverEvent,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
 } from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useApp } from '../../context/AppContext';
 import { Task, KanbanStatus, TaskPriority } from '../../types';
 import {
@@ -38,7 +42,6 @@ import {
   Link2,
   User,
   GripVertical,
-  CornerDownRight,
 } from 'lucide-react';
 
 interface WBSTreeViewProps {
@@ -64,13 +67,6 @@ const priorityColors: Record<TaskPriority, string> = {
   critical: 'bg-red-500/20 text-red-400',
 };
 
-type DropPosition = 'before' | 'after' | 'child';
-
-interface DropTarget {
-  taskId: string;
-  position: DropPosition;
-}
-
 export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
   projectId,
   onTaskClick,
@@ -86,13 +82,18 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
 
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
-  // Configure sensors for drag
+  // Configure sensors for drag - use Mouse and Touch sensors
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px movement before starting drag
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     })
   );
@@ -137,28 +138,8 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  // Handle drag over - determine drop position
-  const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event;
-
-    if (!over || !activeId) {
-      setDropTarget(null);
-      return;
-    }
-
-    const overId = over.id as string;
-
-    // Parse the drop zone ID (format: "taskId-position")
-    if (overId.includes('-drop-')) {
-      const [taskId, , position] = overId.split('-drop-');
-      setDropTarget({ taskId, position: position as DropPosition });
-    } else {
-      // Dropping directly on a task = make it a child
-      setDropTarget({ taskId: overId, position: 'child' });
-    }
+    const id = event.active.id as string;
+    setActiveId(id);
   };
 
   // Handle drag end - perform the move
@@ -166,40 +147,19 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
     const { active, over } = event;
 
     setActiveId(null);
-    setDropTarget(null);
 
     if (!over || active.id === over.id) return;
 
     const draggedTaskId = active.id as string;
+    const targetTaskId = over.id as string;
+
     const draggedTask = tasks.find(t => t.id === draggedTaskId);
-    if (!draggedTask) return;
-
-    let targetTaskId: string;
-    let position: DropPosition;
-
-    const overId = over.id as string;
-    if (overId.includes('-drop-')) {
-      const parts = overId.split('-drop-');
-      targetTaskId = parts[0];
-      position = parts[2] as DropPosition;
-    } else {
-      targetTaskId = overId;
-      position = 'child';
-    }
-
     const targetTask = tasks.find(t => t.id === targetTaskId);
-    if (!targetTask) return;
 
-    // Determine new parent based on position
-    let newParentId: string | undefined;
+    if (!draggedTask || !targetTask) return;
 
-    if (position === 'child') {
-      // Dropping as child of target
-      newParentId = targetTaskId;
-    } else if (position === 'before' || position === 'after') {
-      // Dropping as sibling - use same parent as target
-      newParentId = targetTask.parentTaskId;
-    }
+    // Use target's parent as the new parent (make them siblings)
+    const newParentId = targetTask.parentTaskId;
 
     // Check for cycle
     if (newParentId && wouldCreateCycle(tasks, draggedTaskId, newParentId)) {
@@ -265,12 +225,13 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
     );
   }
 
+  const taskIds = useMemo(() => flattenedTasks.map(t => t.id), [flattenedTasks]);
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="bg-bg-secondary rounded-lg border border-border">
@@ -316,25 +277,23 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
         </div>
 
         {/* Tree List */}
-        <div className="divide-y divide-border/50">
-          {flattenedTasks.map((task, index) => (
-            <DraggableTreeItem
-              key={task.id}
-              task={task}
-              allTasks={tasks}
-              isSelected={task.id === selectedTaskId}
-              isExpanded={allExpanded || expandedIds.has(task.id)}
-              isDragging={activeId === task.id}
-              dropTarget={dropTarget}
-              onToggleExpand={() => toggleExpand(task.id)}
-              onClick={() => onTaskClick?.(task)}
-              onAddSubtask={onAddTask ? () => onAddTask(task.id) : undefined}
-              getResource={getResource}
-              isFirst={index === 0}
-              activeId={activeId}
-            />
-          ))}
-        </div>
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div className="divide-y divide-border/50">
+            {flattenedTasks.map((task) => (
+              <SortableTreeItem
+                key={task.id}
+                task={task}
+                allTasks={tasks}
+                isSelected={task.id === selectedTaskId}
+                isExpanded={allExpanded || expandedIds.has(task.id)}
+                onToggleExpand={() => toggleExpand(task.id)}
+                onClick={() => onTaskClick?.(task)}
+                onAddSubtask={onAddTask ? () => onAddTask(task.id) : undefined}
+                getResource={getResource}
+              />
+            ))}
+          </div>
+        </SortableContext>
       </div>
 
       {/* Drag Overlay */}
@@ -358,42 +317,37 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
   );
 };
 
-// Draggable tree item with drop zones
-interface DraggableTreeItemProps {
+// Sortable tree item using useSortable
+interface SortableTreeItemProps {
   task: FlattenedTask;
   allTasks: Task[];
   isSelected: boolean;
   isExpanded: boolean;
-  isDragging: boolean;
-  dropTarget: DropTarget | null;
   onToggleExpand: () => void;
   onClick: () => void;
   onAddSubtask?: () => void;
   getResource: (id: string) => { name: string; avatarColor: string } | undefined;
-  isFirst: boolean;
-  activeId: string | null;
 }
 
-const DraggableTreeItem: React.FC<DraggableTreeItemProps> = ({
+const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   task,
   allTasks,
   isSelected,
   isExpanded,
-  isDragging,
-  dropTarget,
   onToggleExpand,
   onClick,
   onAddSubtask,
   getResource,
-  isFirst,
-  activeId,
 }) => {
   const {
     attributes,
     listeners,
-    setNodeRef: setDraggableRef,
+    setNodeRef,
+    setActivatorNodeRef,
     transform,
-  } = useDraggable({
+    transition,
+    isDragging,
+  } = useSortable({
     id: task.id,
   });
 
@@ -403,208 +357,137 @@ const DraggableTreeItem: React.FC<DraggableTreeItemProps> = ({
   const dependenciesComplete = areDependenciesComplete(allTasks, task.id);
   const hasDependencies = task.dependsOn && task.dependsOn.length > 0;
 
-  // Check if this is a valid drop target (not self or descendant)
-  const canDropHere = activeId && activeId !== task.id && !wouldCreateCycle(allTasks, activeId, task.id);
-
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      }
-    : undefined;
-
-  return (
-    <div className="relative">
-      {/* Drop zone: Before this item (only show for first item at each level) */}
-      {isFirst && activeId && activeId !== task.id && (
-        <DropZone
-          id={`${task.id}-drop-before`}
-          isActive={dropTarget?.taskId === task.id && dropTarget?.position === 'before'}
-          level={task.level}
-          position="before"
-        />
-      )}
-
-      {/* Main item */}
-      <div
-        ref={setDraggableRef}
-        style={style}
-        className={`
-          group flex items-center gap-2 px-4 py-2 transition-all
-          ${isDragging ? 'opacity-50 bg-accent-blue/10' : 'hover:bg-bg-tertiary'}
-          ${isSelected ? 'bg-accent-blue/10 border-l-2 border-accent-blue' : ''}
-        `}
-      >
-        {/* Drag Handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-text-muted hover:text-text-secondary transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-
-        {/* Indent spacer */}
-        <div style={{ width: `${task.level * 24}px` }} className="flex-shrink-0" />
-
-        {/* Expand/Collapse Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleExpand();
-          }}
-          className={`
-            w-5 h-5 flex items-center justify-center rounded hover:bg-bg-primary transition-colors
-            ${task.hasChildren ? 'text-text-secondary' : 'text-transparent'}
-          `}
-          disabled={!task.hasChildren}
-        >
-          {task.hasChildren && (
-            isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-          )}
-        </button>
-
-        {/* Status Icon */}
-        <span className="flex-shrink-0">{statusIcons[task.kanbanStatus]}</span>
-
-        {/* WBS Code */}
-        {task.wbsCode && (
-          <span className="text-xs font-mono text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded">
-            {task.wbsCode}
-          </span>
-        )}
-
-        {/* Milestone Flag */}
-        {task.isMilestone && (
-          <Flag className="w-4 h-4 text-amber-400 flex-shrink-0" />
-        )}
-
-        {/* Task Title - Clickable */}
-        <span
-          onClick={onClick}
-          className={`flex-grow truncate cursor-pointer hover:text-accent-blue ${
-            task.kanbanStatus === 'done' ? 'text-text-secondary line-through' : 'text-text-primary'
-          }`}
-        >
-          {task.title}
-        </span>
-
-        {/* Priority Badge */}
-        {task.priority && task.priority !== 'medium' && (
-          <span className={`text-xs px-1.5 py-0.5 rounded ${priorityColors[task.priority]}`}>
-            {task.priority}
-          </span>
-        )}
-
-        {/* Dependency Warning */}
-        {hasDependencies && !dependenciesComplete && (
-          <span className="flex items-center gap-1 text-xs text-amber-400" title="Has incomplete dependencies">
-            <Link2 className="w-3 h-3" />
-            <AlertCircle className="w-3 h-3" />
-          </span>
-        )}
-
-        {/* Child Count */}
-        {task.hasChildren && task.childCount > 0 && (
-          <span className="text-xs text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded">
-            {task.childCount} subtask{task.childCount !== 1 ? 's' : ''}
-          </span>
-        )}
-
-        {/* Hours */}
-        <span className="flex items-center gap-1 text-xs text-text-secondary" title={`${totalActual}h actual / ${totalEstimated}h estimated`}>
-          <Clock className="w-3 h-3" />
-          {totalActual}/{totalEstimated}h
-        </span>
-
-        {/* Assignee */}
-        {assignee && (
-          <span
-            className="flex items-center gap-1 text-xs"
-            style={{ color: assignee.avatarColor }}
-            title={assignee.name}
-          >
-            <User className="w-3 h-3" />
-            <span className="max-w-[60px] truncate">{assignee.name.split(' ')[0]}</span>
-          </span>
-        )}
-
-        {/* Due Date */}
-        {task.dueDate && (
-          <span className={`text-xs ${new Date(task.dueDate) < new Date() && task.kanbanStatus !== 'done' ? 'text-red-400' : 'text-text-secondary'}`}>
-            {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        )}
-
-        {/* Add Subtask Button */}
-        {onAddSubtask && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddSubtask();
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-accent-blue transition-all"
-            title="Add subtask"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Drop zone: As child of this item */}
-      {canDropHere && (
-        <DropZone
-          id={`${task.id}-drop-child`}
-          isActive={dropTarget?.taskId === task.id && dropTarget?.position === 'child'}
-          level={task.level + 1}
-          position="child"
-        />
-      )}
-
-      {/* Drop zone: After this item (as sibling) */}
-      {activeId && activeId !== task.id && (
-        <DropZone
-          id={`${task.id}-drop-after`}
-          isActive={dropTarget?.taskId === task.id && dropTarget?.position === 'after'}
-          level={task.level}
-          position="after"
-        />
-      )}
-    </div>
-  );
-};
-
-// Drop zone component
-interface DropZoneProps {
-  id: string;
-  isActive: boolean;
-  level: number;
-  position: DropPosition;
-}
-
-const DropZone: React.FC<DropZoneProps> = ({ id, isActive, level, position }) => {
-  const { setNodeRef, isOver } = useDroppable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : undefined,
+  };
 
   return (
     <div
       ref={setNodeRef}
+      style={style}
       className={`
-        h-1 mx-4 my-0 rounded transition-all
-        ${isOver || isActive ? 'h-8 bg-accent-blue/20 border-2 border-dashed border-accent-blue' : 'bg-transparent'}
+        group flex items-center gap-2 px-4 py-2
+        ${isDragging ? 'bg-accent-blue/10' : 'hover:bg-bg-tertiary'}
+        ${isSelected ? 'bg-accent-blue/10 border-l-2 border-accent-blue' : ''}
       `}
-      style={{ marginLeft: `${level * 24 + 48}px` }}
     >
-      {(isOver || isActive) && (
-        <div className="flex items-center gap-2 h-full px-2 text-xs text-accent-blue">
-          {position === 'child' ? (
-            <>
-              <CornerDownRight className="w-3 h-3" />
-              <span>Drop as subtask</span>
-            </>
-          ) : (
-            <span>Drop here</span>
-          )}
-        </div>
+      {/* Drag Handle */}
+      <div
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-text-muted hover:text-text-secondary transition-colors touch-none"
+      >
+        <GripVertical className="w-4 h-4" />
+      </div>
+
+      {/* Indent spacer */}
+      <div style={{ width: `${task.level * 24}px` }} className="flex-shrink-0" />
+
+      {/* Expand/Collapse Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleExpand();
+        }}
+        className={`
+          w-5 h-5 flex items-center justify-center rounded hover:bg-bg-primary transition-colors
+          ${task.hasChildren ? 'text-text-secondary' : 'text-transparent'}
+        `}
+        disabled={!task.hasChildren}
+      >
+        {task.hasChildren && (
+          isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+        )}
+      </button>
+
+      {/* Status Icon */}
+      <span className="flex-shrink-0">{statusIcons[task.kanbanStatus]}</span>
+
+      {/* WBS Code */}
+      {task.wbsCode && (
+        <span className="text-xs font-mono text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded">
+          {task.wbsCode}
+        </span>
+      )}
+
+      {/* Milestone Flag */}
+      {task.isMilestone && (
+        <Flag className="w-4 h-4 text-amber-400 flex-shrink-0" />
+      )}
+
+      {/* Task Title - Clickable */}
+      <span
+        onClick={onClick}
+        className={`flex-grow truncate cursor-pointer hover:text-accent-blue ${
+          task.kanbanStatus === 'done' ? 'text-text-secondary line-through' : 'text-text-primary'
+        }`}
+      >
+        {task.title}
+      </span>
+
+      {/* Priority Badge */}
+      {task.priority && task.priority !== 'medium' && (
+        <span className={`text-xs px-1.5 py-0.5 rounded ${priorityColors[task.priority]}`}>
+          {task.priority}
+        </span>
+      )}
+
+      {/* Dependency Warning */}
+      {hasDependencies && !dependenciesComplete && (
+        <span className="flex items-center gap-1 text-xs text-amber-400" title="Has incomplete dependencies">
+          <Link2 className="w-3 h-3" />
+          <AlertCircle className="w-3 h-3" />
+        </span>
+      )}
+
+      {/* Child Count */}
+      {task.hasChildren && task.childCount > 0 && (
+        <span className="text-xs text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded">
+          {task.childCount} subtask{task.childCount !== 1 ? 's' : ''}
+        </span>
+      )}
+
+      {/* Hours */}
+      <span className="flex items-center gap-1 text-xs text-text-secondary" title={`${totalActual}h actual / ${totalEstimated}h estimated`}>
+        <Clock className="w-3 h-3" />
+        {totalActual}/{totalEstimated}h
+      </span>
+
+      {/* Assignee */}
+      {assignee && (
+        <span
+          className="flex items-center gap-1 text-xs"
+          style={{ color: assignee.avatarColor }}
+          title={assignee.name}
+        >
+          <User className="w-3 h-3" />
+          <span className="max-w-[60px] truncate">{assignee.name.split(' ')[0]}</span>
+        </span>
+      )}
+
+      {/* Due Date */}
+      {task.dueDate && (
+        <span className={`text-xs ${new Date(task.dueDate) < new Date() && task.kanbanStatus !== 'done' ? 'text-red-400' : 'text-text-secondary'}`}>
+          {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </span>
+      )}
+
+      {/* Add Subtask Button */}
+      {onAddSubtask && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddSubtask();
+          }}
+          className="opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-accent-blue transition-all"
+          title="Add subtask"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
       )}
     </div>
   );
