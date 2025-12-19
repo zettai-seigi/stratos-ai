@@ -4,10 +4,12 @@ import { useApp } from '../../context/AppContext';
 import { useAI } from '../../context/AIContext';
 import { KanbanBoard } from '../execution/KanbanBoard';
 import { WBSTreeView } from '../execution/WBSTreeView';
+import { MilestoneTimeline } from '../execution/MilestoneTimeline';
 import { RAGStatusLabel, RAGBadge, Button, Modal, InfoTooltip } from '../shared';
 import { TaskForm } from '../forms/TaskForm';
 import { ProjectForm } from '../forms/ProjectForm';
-import { Task, Resource, Project, RAGStatus, DEPARTMENTS, PROJECT_CATEGORIES } from '../../types';
+import { MilestoneForm } from '../forms/MilestoneForm';
+import { Task, Resource, Project, RAGStatus, DEPARTMENTS, PROJECT_CATEGORIES, Milestone } from '../../types';
 import {
   FolderKanban,
   AlertTriangle,
@@ -350,6 +352,8 @@ export const OperationalDashboard: React.FC = () => {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [selectedTeamMember, setSelectedTeamMember] = useState<Resource | null>(null);
   const [isTeamMemberModalOpen, setIsTeamMemberModalOpen] = useState(false);
+  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | undefined>();
 
   const project = projectId ? getProject(projectId) : null;
   const initiative = project ? getInitiative(project.initiativeId) : null;
@@ -391,6 +395,16 @@ export const OperationalDashboard: React.FC = () => {
 
   const handleEditProject = () => {
     setIsProjectModalOpen(true);
+  };
+
+  const handleAddMilestone = () => {
+    setEditingMilestone(undefined);
+    setIsMilestoneModalOpen(true);
+  };
+
+  const handleEditMilestone = (milestone: Milestone) => {
+    setEditingMilestone(milestone);
+    setIsMilestoneModalOpen(true);
   };
 
   const tabs = [
@@ -502,49 +516,59 @@ export const OperationalDashboard: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div
-            onClick={() => setActiveTab('execution')}
-            className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm text-text-secondary">Completion</p>
-              <ArrowRight className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              onClick={() => setActiveTab('execution')}
+              className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm text-text-secondary">Completion</p>
+                <ArrowRight className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="text-3xl font-bold text-text-primary">{completionPercentage}%</p>
+              <div className="mt-2 h-2 bg-bg-hover rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent-blue rounded-full transition-all"
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-text-primary">{completionPercentage}%</p>
-            <div className="mt-2 h-2 bg-bg-hover rounded-full overflow-hidden">
-              <div
-                className="h-full bg-accent-blue rounded-full transition-all"
-                style={{ width: `${completionPercentage}%` }}
-              />
+            <div
+              onClick={() => setActiveTab('execution')}
+              className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm text-text-secondary">Total Tasks</p>
+                <ArrowRight className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="text-3xl font-bold text-text-primary">{tasks.length}</p>
+              <p className="text-sm text-text-muted mt-1">{completedTasks} completed</p>
+            </div>
+            <div
+              onClick={handleEditProject}
+              className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm text-text-secondary">Budget Spent</p>
+                <Edit2 className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="text-3xl font-bold text-text-primary">
+                ${(project.spentBudget / 1000).toFixed(0)}K
+              </p>
+              <p className="text-sm text-text-muted mt-1">
+                of ${(project.budget / 1000).toFixed(0)}K allocated
+              </p>
             </div>
           </div>
-          <div
-            onClick={() => setActiveTab('execution')}
-            className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm text-text-secondary">Total Tasks</p>
-              <ArrowRight className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-3xl font-bold text-text-primary">{tasks.length}</p>
-            <p className="text-sm text-text-muted mt-1">{completedTasks} completed</p>
-          </div>
-          <div
-            onClick={handleEditProject}
-            className="bg-bg-card rounded-xl border border-border p-5 cursor-pointer hover:bg-bg-hover transition-colors group"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm text-text-secondary">Budget Spent</p>
-              <Edit2 className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-3xl font-bold text-text-primary">
-              ${(project.spentBudget / 1000).toFixed(0)}K
-            </p>
-            <p className="text-sm text-text-muted mt-1">
-              of ${(project.budget / 1000).toFixed(0)}K allocated
-            </p>
-          </div>
+
+          {/* Milestone Timeline */}
+          <MilestoneTimeline
+            projectId={project.id}
+            onMilestoneClick={handleEditMilestone}
+            onAddMilestone={handleAddMilestone}
+          />
         </div>
       )}
 
@@ -782,6 +806,26 @@ export const OperationalDashboard: React.FC = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Milestone Modal */}
+      <Modal
+        isOpen={isMilestoneModalOpen}
+        onClose={() => {
+          setIsMilestoneModalOpen(false);
+          setEditingMilestone(undefined);
+        }}
+        title={editingMilestone ? 'Edit Milestone' : 'Add New Milestone'}
+        size="lg"
+      >
+        <MilestoneForm
+          projectId={project.id}
+          milestone={editingMilestone}
+          onClose={() => {
+            setIsMilestoneModalOpen(false);
+            setEditingMilestone(undefined);
+          }}
+        />
       </Modal>
     </div>
   );
