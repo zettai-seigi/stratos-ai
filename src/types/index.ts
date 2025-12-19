@@ -11,6 +11,12 @@ export type KanbanStatus = 'todo' | 'in_progress' | 'blocked' | 'done';
 /** Project lifecycle status */
 export type ProjectStatus = 'not_started' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
 
+/** Milestone status for WBS tracking */
+export type MilestoneStatus = 'pending' | 'completed' | 'missed';
+
+/** Task priority levels */
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
+
 /** Department/Function codes for Work ID generation */
 export type DepartmentCode =
   | 'FIN'   // Finance
@@ -165,6 +171,41 @@ export interface Task {
   actualHours: number;
   /** Department responsible for this task */
   departmentCode?: DepartmentCode;
+
+  // ========== WBS HIERARCHY FIELDS ==========
+  /** Parent task ID for hierarchical decomposition (null = root task) */
+  parentTaskId?: string;
+  /** IDs of tasks this task depends on (must complete before this starts) */
+  dependsOn?: string[];
+  /** WBS code for hierarchical reference (e.g., "1.2.3") */
+  wbsCode?: string;
+  /** Whether this task represents a milestone */
+  isMilestone?: boolean;
+  /** Planned hours for earned value tracking */
+  plannedHours?: number;
+  /** Deliverable/output produced by this task */
+  deliverable?: string;
+  /** Task priority level */
+  priority?: TaskPriority;
+  /** Start date for scheduling (ISO date string) */
+  startDate?: string;
+}
+
+/** Milestone - Significant progress markers within a project */
+export interface Milestone {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  /** Target completion date */
+  targetDate: string; // ISO date string
+  /** Actual completion date */
+  completedDate?: string;
+  status: MilestoneStatus;
+  /** Tasks that must be completed for this milestone */
+  linkedTaskIds: string[];
+  /** Order for display */
+  displayOrder: number;
 }
 
 /** Resource - People with department/function tracking */
@@ -227,6 +268,8 @@ export interface AppState {
   resources: Resource[];
   /** Cross-functional contribution tracking */
   functionContributions?: FunctionContribution[];
+  /** Project milestones for WBS tracking */
+  milestones?: Milestone[];
 }
 
 /** Action types for reducer - strongly typed payloads */
@@ -253,7 +296,10 @@ export type AppAction =
   | { type: 'IMPORT_DATA'; payload: Partial<AppState> }
   | { type: 'ADD_FUNCTION_CONTRIBUTION'; payload: FunctionContribution }
   | { type: 'UPDATE_FUNCTION_CONTRIBUTION'; payload: FunctionContribution }
-  | { type: 'DELETE_FUNCTION_CONTRIBUTION'; payload: { projectId: string; departmentCode: DepartmentCode } };
+  | { type: 'DELETE_FUNCTION_CONTRIBUTION'; payload: { projectId: string; departmentCode: DepartmentCode } }
+  | { type: 'ADD_MILESTONE'; payload: Milestone }
+  | { type: 'UPDATE_MILESTONE'; payload: Milestone }
+  | { type: 'DELETE_MILESTONE'; payload: string };
 
 // =============================================================================
 // NAVIGATION & VIEW TYPES
@@ -330,4 +376,14 @@ export function isKanbanStatus(value: string): value is KanbanStatus {
 /** Type guard to check if a string is a valid ProjectStatus */
 export function isProjectStatus(value: string): value is ProjectStatus {
   return ['not_started', 'in_progress', 'on_hold', 'completed', 'cancelled'].includes(value);
+}
+
+/** Type guard to check if a string is a valid MilestoneStatus */
+export function isMilestoneStatus(value: string): value is MilestoneStatus {
+  return ['pending', 'completed', 'missed'].includes(value);
+}
+
+/** Type guard to check if a string is a valid TaskPriority */
+export function isTaskPriority(value: string): value is TaskPriority {
+  return ['low', 'medium', 'high', 'critical'].includes(value);
 }

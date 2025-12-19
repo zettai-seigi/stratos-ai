@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { AppState, AppAction, StrategyPillar, StrategicKPI, Initiative, Project, Task, Resource } from '../types';
+import { AppState, AppAction, StrategyPillar, StrategicKPI, Initiative, Project, Task, Resource, Milestone } from '../types';
 import { seedData } from '../utils/seedData';
 
 const STORAGE_KEY = 'stratos-ai-data';
@@ -89,6 +89,17 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'DELETE_RESOURCE':
       return { ...state, resources: state.resources.filter((r) => r.id !== action.payload) };
 
+    // Milestone actions (WBS support)
+    case 'ADD_MILESTONE':
+      return { ...state, milestones: [...(state.milestones || []), action.payload] };
+    case 'UPDATE_MILESTONE':
+      return {
+        ...state,
+        milestones: (state.milestones || []).map((m) => (m.id === action.payload.id ? action.payload : m)),
+      };
+    case 'DELETE_MILESTONE':
+      return { ...state, milestones: (state.milestones || []).filter((m) => m.id !== action.payload) };
+
     // Import data (merge)
     case 'IMPORT_DATA':
       return {
@@ -98,6 +109,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         projects: [...state.projects, ...(action.payload.projects || [])],
         tasks: [...state.tasks, ...(action.payload.tasks || [])],
         resources: action.payload.resources || state.resources,
+        milestones: [...(state.milestones || []), ...(action.payload.milestones || [])],
       };
 
     default:
@@ -119,6 +131,11 @@ interface AppContextType {
   getTask: (id: string) => Task | undefined;
   getTasksByProject: (projectId: string) => Task[];
   getResource: (id: string) => Resource | undefined;
+  // WBS helper functions
+  getMilestone: (id: string) => Milestone | undefined;
+  getMilestonesByProject: (projectId: string) => Milestone[];
+  getChildTasks: (parentTaskId: string) => Task[];
+  getRootTasks: (projectId: string) => Task[];
   resetToSeedData: () => void;
 }
 
@@ -147,6 +164,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const getTask = (id: string) => state.tasks.find((t) => t.id === id);
   const getTasksByProject = (projectId: string) => state.tasks.filter((t) => t.projectId === projectId);
   const getResource = (id: string) => state.resources.find((r) => r.id === id);
+
+  // WBS helper functions
+  const getMilestone = (id: string) => (state.milestones || []).find((m) => m.id === id);
+  const getMilestonesByProject = (projectId: string) => (state.milestones || []).filter((m) => m.projectId === projectId);
+  const getChildTasks = (parentTaskId: string) => state.tasks.filter((t) => t.parentTaskId === parentTaskId);
+  const getRootTasks = (projectId: string) => state.tasks.filter((t) => t.projectId === projectId && !t.parentTaskId);
+
   const resetToSeedData = () => dispatch({ type: 'SET_STATE', payload: seedData });
 
   const value: AppContextType = {
@@ -161,6 +185,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     getTask,
     getTasksByProject,
     getResource,
+    // WBS helper functions
+    getMilestone,
+    getMilestonesByProject,
+    getChildTasks,
+    getRootTasks,
     resetToSeedData,
   };
 
