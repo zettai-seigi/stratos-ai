@@ -71,7 +71,7 @@ export function generateAllWbsCodes(tasks: Task[], projectId: string): Map<strin
   function assignCodes(parentId: string | undefined, prefix: string) {
     const children = projectTasks
       .filter(t => t.parentTaskId === parentId)
-      .sort((a, b) => (a.wbsCode || '').localeCompare(b.wbsCode || ''));
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
     children.forEach((task, index) => {
       const code = prefix ? `${prefix}.${index + 1}` : String(index + 1);
@@ -130,9 +130,9 @@ export function buildTaskTree(tasks: Task[], projectId: string): TaskWithHierarc
 
   setLevelsAndPaths(rootTasks, 0, []);
 
-  // Sort children by WBS code
+  // Sort children by sortOrder (fallback to wbsCode)
   function sortChildren(tasks: TaskWithHierarchy[]) {
-    tasks.sort((a, b) => (a.wbsCode || '').localeCompare(b.wbsCode || ''));
+    tasks.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
     tasks.forEach(task => sortChildren(task.children));
   }
 

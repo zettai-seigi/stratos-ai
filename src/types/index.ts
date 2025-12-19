@@ -189,6 +189,8 @@ export interface Task {
   priority?: TaskPriority;
   /** Start date for scheduling (ISO date string) */
   startDate?: string;
+  /** Sort order within parent level for drag-and-drop reordering */
+  sortOrder?: number;
 }
 
 /** Milestone - Significant progress markers within a project */

@@ -158,33 +158,79 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
 
     if (!draggedTask || !targetTask) return;
 
-    // Use target's parent as the new parent (make them siblings)
+    // Find the indices in the flattened list
+    const oldIndex = flattenedTasks.findIndex(t => t.id === draggedTaskId);
+    const newIndex = flattenedTasks.findIndex(t => t.id === targetTaskId);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Get the new parent based on target's parent
     const newParentId = targetTask.parentTaskId;
 
-    // Check for cycle
-    if (newParentId && wouldCreateCycle(tasks, draggedTaskId, newParentId)) {
-      console.warn('Cannot move task: would create cycle');
-      return;
+    // Check for cycle if changing parents
+    if (newParentId && newParentId !== draggedTask.parentTaskId) {
+      if (wouldCreateCycle(tasks, draggedTaskId, newParentId)) {
+        console.warn('Cannot move task: would create cycle');
+        return;
+      }
     }
 
-    // Don't move if parent wouldn't change
-    if (draggedTask.parentTaskId === newParentId) return;
+    // Get siblings at the target level (tasks with same parent as target)
+    const siblings = tasks
+      .filter(t => t.projectId === projectId && t.parentTaskId === newParentId)
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
-    // Update the task with new parent
-    const updatedTask: Task = {
-      ...draggedTask,
-      parentTaskId: newParentId,
-    };
+    // Remove dragged task from siblings if it's already there
+    const siblingsWithoutDragged = siblings.filter(t => t.id !== draggedTaskId);
 
-    dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+    // Find target's position in siblings
+    const targetIndexInSiblings = siblingsWithoutDragged.findIndex(t => t.id === targetTaskId);
 
-    // Regenerate WBS codes for all tasks in project
+    // Determine where to insert (before or after based on drag direction)
+    let insertIndex: number;
+    if (oldIndex < newIndex) {
+      // Dragging down - insert after target
+      insertIndex = targetIndexInSiblings + 1;
+    } else {
+      // Dragging up - insert before target
+      insertIndex = targetIndexInSiblings;
+    }
+
+    // Create new siblings array with dragged task inserted
+    const newSiblings = [...siblingsWithoutDragged];
+    newSiblings.splice(insertIndex, 0, draggedTask);
+
+    // Update sortOrder for all siblings and the dragged task
+    const updates: Task[] = [];
+
+    newSiblings.forEach((task, index) => {
+      const needsUpdate = task.sortOrder !== index ||
+        (task.id === draggedTaskId && task.parentTaskId !== newParentId);
+
+      if (needsUpdate) {
+        updates.push({
+          ...task,
+          sortOrder: index,
+          parentTaskId: task.id === draggedTaskId ? newParentId : task.parentTaskId,
+        });
+      }
+    });
+
+    // Dispatch all updates
+    updates.forEach(task => {
+      dispatch({ type: 'UPDATE_TASK', payload: task });
+    });
+
+    // Regenerate WBS codes
     setTimeout(() => {
-      const updatedTasks = [...tasks.filter(t => t.id !== draggedTaskId), updatedTask];
-      const newWbsCodes = generateAllWbsCodes(updatedTasks, projectId);
+      const currentTasks = tasks.map(t => {
+        const update = updates.find(u => u.id === t.id);
+        return update || t;
+      });
 
-      // Update all tasks with new WBS codes
-      updatedTasks
+      const newWbsCodes = generateAllWbsCodes(currentTasks, projectId);
+
+      currentTasks
         .filter(t => t.projectId === projectId)
         .forEach(task => {
           const newCode = newWbsCodes.get(task.id);
@@ -195,7 +241,7 @@ export const WBSTreeView: React.FC<WBSTreeViewProps> = ({
             });
           }
         });
-    }, 0);
+    }, 50);
 
     // Auto-expand the new parent
     if (newParentId) {
