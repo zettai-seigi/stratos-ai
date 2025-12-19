@@ -518,3 +518,368 @@ export function removeAPIKey(): void {
   localStorage.removeItem('stratos-ai-api-key');
   clearAICache();
 }
+
+// =============================================================================
+// AI GENERATION FEATURES (Phase 2)
+// =============================================================================
+
+// Types for AI generation features
+export interface SuggestedKPI {
+  name: string;
+  description: string;
+  unit: '%' | '$' | 'score' | 'number';
+  suggestedTarget: number;
+  suggestedBaseline: number;
+  measurementFrequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  rationale: string;
+  dataSource?: string;
+}
+
+export interface KPISuggestionResult {
+  objective: string;
+  perspective: string;
+  suggestedKPIs: SuggestedKPI[];
+  industryBenchmarks?: string;
+  generatedAt: string;
+}
+
+export interface GeneratedTask {
+  title: string;
+  description: string;
+  estimatedHours: number;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  deliverable?: string;
+  suggestedDuration: string;
+  children?: GeneratedTask[];
+}
+
+export interface WBSGenerationResult {
+  projectName: string;
+  description: string;
+  tasks: GeneratedTask[];
+  totalEstimatedHours: number;
+  suggestedMilestones: { name: string; afterTask: string; description: string }[];
+  dependencies: { from: string; to: string; type: string }[];
+  generatedAt: string;
+}
+
+export interface SuggestedInitiative {
+  name: string;
+  description: string;
+  strategicAlignment: string;
+  estimatedBudget: { min: number; max: number };
+  estimatedDuration: string;
+  keyDeliverables: string[];
+  risks: string[];
+  successMetrics: string[];
+}
+
+export interface InitiativeIdeationResult {
+  objective: string;
+  pillar: string;
+  suggestedInitiatives: SuggestedInitiative[];
+  generatedAt: string;
+}
+
+/**
+ * Suggest KPIs based on a strategic objective
+ */
+export async function suggestKPIs(
+  objective: string,
+  perspective: 'Financial' | 'Customer' | 'Internal Processes' | 'Learning & Growth',
+  industryContext?: string,
+  apiKey?: string
+): Promise<KPISuggestionResult> {
+  const key = apiKey || getAPIKey();
+  if (!key) {
+    throw new Error('API key not configured');
+  }
+
+  const systemPrompt = `You are an expert in Balanced Scorecard (BSC) methodology and KPI design. You help organizations translate strategic objectives into measurable KPIs.
+
+Guidelines for KPI suggestions:
+- KPIs should be SMART: Specific, Measurable, Achievable, Relevant, Time-bound
+- Each perspective has typical KPI patterns:
+  * Financial: Revenue, costs, margins, ROI, cash flow
+  * Customer: Satisfaction, retention, acquisition, NPS, market share
+  * Internal Processes: Efficiency, quality, cycle time, error rates, throughput
+  * Learning & Growth: Training, skills, innovation, culture, retention
+- Suggest 3-5 KPIs with varying difficulty to measure
+- Include both leading indicators (predictive) and lagging indicators (outcomes)
+- Provide realistic targets based on industry norms
+
+Respond only with valid JSON.`;
+
+  const userPrompt = `Suggest KPIs for this strategic objective:
+
+Objective: ${objective}
+BSC Perspective: ${perspective}
+${industryContext ? `Industry Context: ${industryContext}` : ''}
+
+Respond with JSON:
+{
+  "objective": "${objective}",
+  "perspective": "${perspective}",
+  "suggestedKPIs": [
+    {
+      "name": "KPI Name",
+      "description": "What this KPI measures and why it matters",
+      "unit": "%|$|score|number",
+      "suggestedTarget": 85,
+      "suggestedBaseline": 70,
+      "measurementFrequency": "monthly",
+      "rationale": "Why this KPI aligns with the objective",
+      "dataSource": "Where to get the data"
+    }
+  ],
+  "industryBenchmarks": "Brief note on industry standards for these metrics"
+}`;
+
+  const response = await callClaudeAPI(key, systemPrompt, userPrompt);
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('Invalid JSON response');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    ...parsed,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Generate a Work Breakdown Structure for a project
+ */
+export async function generateWBS(
+  projectName: string,
+  projectDescription: string,
+  complexity: 'simple' | 'moderate' | 'complex',
+  teamSize?: number,
+  apiKey?: string
+): Promise<WBSGenerationResult> {
+  const key = apiKey || getAPIKey();
+  if (!key) {
+    throw new Error('API key not configured');
+  }
+
+  const taskCounts = {
+    simple: '5-10',
+    moderate: '10-20',
+    complex: '20-40',
+  };
+
+  const systemPrompt = `You are an expert project manager and WBS (Work Breakdown Structure) specialist. You decompose projects into hierarchical task structures following PMI best practices.
+
+WBS Guidelines:
+- Follow the 100% rule: all work must be captured
+- Each task should be specific and actionable
+- Parent tasks are summary tasks, not actual work
+- Leaf tasks (work packages) should be 8-80 hours of effort
+- Consider dependencies between tasks
+- Suggest logical milestones at key delivery points
+- Include planning, execution, and quality assurance phases
+
+Respond only with valid JSON.`;
+
+  const userPrompt = `Generate a Work Breakdown Structure for this project:
+
+Project Name: ${projectName}
+Description: ${projectDescription}
+Complexity: ${complexity} (suggest ${taskCounts[complexity]} tasks)
+${teamSize ? `Team Size: ${teamSize} people` : ''}
+
+Respond with JSON:
+{
+  "projectName": "${projectName}",
+  "description": "${projectDescription}",
+  "tasks": [
+    {
+      "title": "Parent Task Name",
+      "description": "What this task accomplishes",
+      "estimatedHours": 0,
+      "priority": "high",
+      "deliverable": "Output of this work",
+      "suggestedDuration": "2 weeks",
+      "children": [
+        {
+          "title": "Subtask Name",
+          "description": "Specific work item",
+          "estimatedHours": 16,
+          "priority": "medium",
+          "deliverable": "Specific deliverable",
+          "suggestedDuration": "2 days"
+        }
+      ]
+    }
+  ],
+  "totalEstimatedHours": 160,
+  "suggestedMilestones": [
+    {
+      "name": "Milestone Name",
+      "afterTask": "Task title this milestone follows",
+      "description": "What this milestone signifies"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "Task A title",
+      "to": "Task B title",
+      "type": "finish-to-start"
+    }
+  ]
+}
+
+Create a realistic hierarchical structure with parent tasks containing subtasks. Estimate hours for leaf tasks only (parent task hours should be 0 as they're summaries).`;
+
+  const response = await callClaudeAPI(key, systemPrompt, userPrompt);
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('Invalid JSON response');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    ...parsed,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Suggest initiatives to achieve a strategic objective
+ */
+export async function ideateInitiatives(
+  objective: string,
+  pillarName: string,
+  constraints?: { budget?: number; timeline?: string; resources?: string },
+  apiKey?: string
+): Promise<InitiativeIdeationResult> {
+  const key = apiKey || getAPIKey();
+  if (!key) {
+    throw new Error('API key not configured');
+  }
+
+  const systemPrompt = `You are a strategic planning consultant helping organizations identify initiatives to achieve their objectives. You understand the Balanced Scorecard framework and how initiatives connect to strategic goals.
+
+Guidelines:
+- Suggest 2-4 diverse initiatives
+- Consider different approaches (technology, process, people, partnerships)
+- Include quick wins and longer-term transformational initiatives
+- Be realistic about budget and timeline
+- Identify potential risks upfront
+- Define clear success metrics
+
+Respond only with valid JSON.`;
+
+  const constraintsText = constraints
+    ? `
+Constraints:
+${constraints.budget ? `- Budget: Up to $${constraints.budget.toLocaleString()}` : ''}
+${constraints.timeline ? `- Timeline: ${constraints.timeline}` : ''}
+${constraints.resources ? `- Resources: ${constraints.resources}` : ''}`
+    : '';
+
+  const userPrompt = `Suggest strategic initiatives for this objective:
+
+Strategic Objective: ${objective}
+BSC Pillar: ${pillarName}
+${constraintsText}
+
+Respond with JSON:
+{
+  "objective": "${objective}",
+  "pillar": "${pillarName}",
+  "suggestedInitiatives": [
+    {
+      "name": "Initiative Name",
+      "description": "What this initiative involves",
+      "strategicAlignment": "How this supports the objective",
+      "estimatedBudget": { "min": 50000, "max": 100000 },
+      "estimatedDuration": "6 months",
+      "keyDeliverables": ["Deliverable 1", "Deliverable 2"],
+      "risks": ["Risk 1", "Risk 2"],
+      "successMetrics": ["Metric 1", "Metric 2"]
+    }
+  ]
+}`;
+
+  const response = await callClaudeAPI(key, systemPrompt, userPrompt);
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('Invalid JSON response');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    ...parsed,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Chat with AI assistant about strategy, KPIs, or projects
+ */
+export async function chatWithAssistant(
+  message: string,
+  context: {
+    currentPage?: string;
+    selectedPillar?: string;
+    selectedProject?: string;
+    recentActions?: string[];
+  },
+  conversationHistory: { role: 'user' | 'assistant'; content: string }[],
+  apiKey?: string
+): Promise<string> {
+  const key = apiKey || getAPIKey();
+  if (!key) {
+    throw new Error('API key not configured');
+  }
+
+  const systemPrompt = `You are an AI assistant integrated into StratOS AI, a strategic planning and execution platform. You help users with:
+
+1. Understanding Balanced Scorecard (BSC) methodology
+2. Designing KPIs for their strategic objectives
+3. Creating and managing initiatives and projects
+4. Analyzing performance and identifying risks
+5. Best practices for strategy execution
+
+Context about the user's current state:
+${context.currentPage ? `- Currently viewing: ${context.currentPage}` : ''}
+${context.selectedPillar ? `- Selected pillar: ${context.selectedPillar}` : ''}
+${context.selectedProject ? `- Selected project: ${context.selectedProject}` : ''}
+${context.recentActions?.length ? `- Recent actions: ${context.recentActions.join(', ')}` : ''}
+
+Be helpful, concise, and actionable. If the user asks about creating KPIs or WBS, explain that you can generate suggestions for them using the dedicated tools in the app.`;
+
+  const messages = [
+    ...conversationHistory.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+    })),
+    { role: 'user' as const, content: message },
+  ];
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || 'API request failed');
+  }
+
+  const data = await response.json();
+  return data.content[0].text;
+}

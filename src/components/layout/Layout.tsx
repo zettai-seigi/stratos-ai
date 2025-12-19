@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { AIAssistantChat } from '../ai/AIAssistantChat';
 
 export const Layout: React.FC = () => {
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -43,6 +44,8 @@ export const Layout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      {/* AI Assistant Chat - available on all pages */}
+      <AIAssistantChat />
     </div>
   );
 };
