@@ -1,4 +1,78 @@
 // =============================================================================
+// RE-EXPORT CORPORATE TYPES (Tier 1 - Legal Structure)
+// =============================================================================
+
+import type { CorporateEntity, CorporateHierarchyConfig } from './corporate';
+export type {
+  CorporateEntityType,
+  BSCScope,
+  CorporateEntity,
+  CorporateHierarchyConfig,
+  CorporateEntityMetrics,
+} from './corporate';
+export {
+  DEFAULT_CORPORATE_CONFIG,
+  DEFAULT_CORPORATION,
+  DEFAULT_COMPANY,
+  getSiblingEntities,
+  getAncestorEntities,
+  getDescendantEntities,
+  getChildEntities,
+  getRootCorporation,
+  getAllCompanies,
+  findCompanyAncestor,
+  validateCorporateHierarchy,
+  createCorporateEntity,
+} from './corporate';
+
+// =============================================================================
+// RE-EXPORT ORGANIZATION TYPES (Tier 2 - Org Structure)
+// =============================================================================
+
+import type { OrgUnit, OrgHierarchyConfig } from './organization';
+export type { OrgLevel, OrgUnit, OrgHierarchyConfig, OrgUnitMetrics } from './organization';
+export {
+  LEVELS_WITHOUT_BSC,
+  ORG_LEVEL_ORDER,
+  DEFAULT_ORG_CONFIG,
+  getChildLevel,
+  getParentLevel,
+  levelCanHaveBSC,
+  getLevelsWithBSC,
+  createOrgUnit,
+  getChildOrgUnits,
+  getDescendantOrgUnits,
+  getAncestorOrgUnits,
+  getOrgUnitsForCompany,
+  getTopLevelOrgUnits,
+  validateOrgHierarchy,
+} from './organization';
+
+// =============================================================================
+// RE-EXPORT RBAC TYPES (Role-Based Access Control)
+// =============================================================================
+
+import type { User, UserEntityAssignment } from './rbac';
+export type {
+  UserRole,
+  Permissions,
+  User,
+  UserEntityAssignment,
+  RoleInfo,
+} from './rbac';
+export {
+  DEFAULT_PERMISSIONS,
+  ROLE_INFO,
+  DEFAULT_ADMIN_USER,
+  DEFAULT_ADMIN_ASSIGNMENT,
+  getEffectiveRole,
+  getPermissionsForRole,
+  canPerformAction,
+  createUserAssignment,
+  createUser,
+} from './rbac';
+
+// =============================================================================
 // ENUMS & LITERAL TYPES
 // =============================================================================
 
@@ -111,6 +185,8 @@ export interface StrategyPillar {
   description: string;
   displayOrder: number;
   ragStatus: RAGStatus;
+  /** Organization unit that owns this pillar (undefined = company level) */
+  orgUnitId?: string;
 }
 
 /** Strategic KPI - Metrics for each pillar */
@@ -148,6 +224,8 @@ export interface Initiative {
   ragStatus: RAGStatus;
   /** Optional: Link to specific KPIs this initiative impacts */
   linkedKpiIds?: string[];
+  /** Organization unit that owns this initiative (undefined = company level) */
+  orgUnitId?: string;
 
   // ========== PPM METRICS (Optional for backward compatibility) ==========
   /** Priority band (P1 = highest priority) */
@@ -185,6 +263,8 @@ export interface Project {
   fiscalYear: number;
   /** Generated Work ID (e.g., "OPS-25-GROW-012") */
   workId: string;
+  /** Organization unit that owns this project (undefined = inherits from initiative) */
+  orgUnitId?: string;
 
   // ========== EVM METRICS (Optional for backward compatibility) ==========
   /** Planned Value (BCWS) - Budgeted cost of work scheduled */
@@ -467,6 +547,8 @@ export interface Resource {
   departmentCode: DepartmentCode;
   /** Hourly cost rate for budget calculations */
   hourlyRate?: number;
+  /** Organization unit this resource belongs to (undefined = company level) */
+  orgUnitId?: string;
 
   // ========== UTILIZATION TRACKING (Optional) ==========
   /** Skills/competencies */
@@ -526,6 +608,30 @@ export interface AppState {
   functionContributions?: FunctionContribution[];
   /** Project milestones for WBS tracking */
   milestones?: Milestone[];
+
+  // ========== CORPORATE STRUCTURE (Tier 1) ==========
+  /** Corporate entities (Corporation → Holdings → Companies) */
+  corporateEntities?: CorporateEntity[];
+  /** Corporate hierarchy configuration */
+  corporateConfig?: CorporateHierarchyConfig;
+
+  // ========== ORGANIZATION STRUCTURE (Tier 2) ==========
+  /** Organization units for hierarchy (within companies) */
+  orgUnits?: OrgUnit[];
+  /** Organization hierarchy configuration */
+  orgConfig?: OrgHierarchyConfig;
+
+  // ========== RBAC (Role-Based Access Control) ==========
+  /** User profiles */
+  users?: User[];
+  /** User role assignments to entities/orgs */
+  userAssignments?: UserEntityAssignment[];
+  /** Current logged-in user ID */
+  currentUserId?: string;
+
+  // ========== SETUP WIZARD ==========
+  /** Whether the setup wizard has been completed */
+  setupWizardCompleted?: boolean;
 }
 
 /** Action types for reducer - strongly typed payloads */
@@ -555,7 +661,28 @@ export type AppAction =
   | { type: 'DELETE_FUNCTION_CONTRIBUTION'; payload: { projectId: string; departmentCode: DepartmentCode } }
   | { type: 'ADD_MILESTONE'; payload: Milestone }
   | { type: 'UPDATE_MILESTONE'; payload: Milestone }
-  | { type: 'DELETE_MILESTONE'; payload: string };
+  | { type: 'DELETE_MILESTONE'; payload: string }
+  // Organization hierarchy actions
+  | { type: 'ADD_ORG_UNIT'; payload: OrgUnit }
+  | { type: 'UPDATE_ORG_UNIT'; payload: OrgUnit }
+  | { type: 'DELETE_ORG_UNIT'; payload: string }
+  | { type: 'UPDATE_ORG_CONFIG'; payload: OrgHierarchyConfig }
+  // Corporate entity actions
+  | { type: 'ADD_CORPORATE_ENTITY'; payload: CorporateEntity }
+  | { type: 'UPDATE_CORPORATE_ENTITY'; payload: CorporateEntity }
+  | { type: 'DELETE_CORPORATE_ENTITY'; payload: string }
+  | { type: 'UPDATE_CORPORATE_CONFIG'; payload: CorporateHierarchyConfig }
+  // User management actions
+  | { type: 'ADD_USER'; payload: User }
+  | { type: 'UPDATE_USER'; payload: User }
+  | { type: 'DELETE_USER'; payload: string }
+  | { type: 'SET_CURRENT_USER'; payload: string | null }
+  // User assignment actions
+  | { type: 'ADD_USER_ASSIGNMENT'; payload: UserEntityAssignment }
+  | { type: 'UPDATE_USER_ASSIGNMENT'; payload: UserEntityAssignment }
+  | { type: 'DELETE_USER_ASSIGNMENT'; payload: string }
+  // Setup wizard actions
+  | { type: 'SET_SETUP_WIZARD_COMPLETED'; payload: boolean };
 
 // =============================================================================
 // NAVIGATION & VIEW TYPES

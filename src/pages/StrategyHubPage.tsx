@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { RAGBadge, InfoTooltip } from '../components/shared';
+import { RAGBadge, InfoTooltip, Modal, Button } from '../components/shared';
+import { PillarForm } from '../components/forms/PillarForm';
 import {
   Target,
   TrendingUp,
@@ -15,7 +16,8 @@ import {
   Users,
   Settings,
   GraduationCap,
-  ArrowRight
+  ArrowRight,
+  Upload
 } from 'lucide-react';
 import { StrategyPillar, StrategicKPI } from '../types';
 
@@ -256,6 +258,8 @@ export const StrategyHubPage: React.FC = () => {
   const { state, getKPIsByPillar, getInitiativesByPillar, dispatch } = useApp();
   const { pillars } = state;
   const [editingKPI, setEditingKPI] = useState<StrategicKPI | null>(null);
+  const [isAddPillarModalOpen, setIsAddPillarModalOpen] = useState(false);
+  const [editingPillar, setEditingPillar] = useState<StrategyPillar | null>(null);
   const pillarRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSaveKPI = (kpi: StrategicKPI) => {
@@ -278,9 +282,14 @@ export const StrategyHubPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-text-primary">Strategy Hub</h1>
           <p className="text-text-secondary mt-1">Manage your Balanced Scorecard and Strategic KPIs</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
-          <Target className="w-5 h-5 text-accent-blue" />
-          <span className="text-sm text-text-secondary">BSC Framework</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+            <Target className="w-5 h-5 text-accent-blue" />
+            <span className="text-sm text-text-secondary">BSC Framework</span>
+          </div>
+          <Button onClick={() => setIsAddPillarModalOpen(true)} icon={<Plus className="w-4 h-4" />}>
+            Add Pillar
+          </Button>
         </div>
       </div>
 
@@ -376,19 +385,37 @@ export const StrategyHubPage: React.FC = () => {
             size="lg"
           />
         </div>
-        {pillars
-          .sort((a, b) => a.displayOrder - b.displayOrder)
-          .map((pillar) => (
-            <div key={pillar.id} ref={(el) => { pillarRefs.current[pillar.id] = el; }}>
-              <PillarSection
-                pillar={pillar}
-                kpis={getKPIsByPillar(pillar.id)}
-                initiativeCount={getInitiativesByPillar(pillar.id).length}
-                onEditKPI={setEditingKPI}
-                onViewInitiatives={() => navigate(`/portfolio?pillar=${pillar.id}`)}
-              />
+        {pillars.length === 0 ? (
+          <div className="bg-bg-card rounded-xl border border-border p-8 text-center">
+            <Target className="w-12 h-12 text-accent-blue mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-text-primary mb-2">No Strategy Pillars</h3>
+            <p className="text-text-secondary mb-4">
+              Create your first strategy pillar to start building your Balanced Scorecard.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Button onClick={() => setIsAddPillarModalOpen(true)} icon={<Plus className="w-4 h-4" />}>
+                Create Pillar
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/import')} icon={<Upload className="w-4 h-4" />}>
+                Import Data
+              </Button>
             </div>
-          ))}
+          </div>
+        ) : (
+          pillars
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((pillar) => (
+              <div key={pillar.id} ref={(el) => { pillarRefs.current[pillar.id] = el; }}>
+                <PillarSection
+                  pillar={pillar}
+                  kpis={getKPIsByPillar(pillar.id)}
+                  initiativeCount={getInitiativesByPillar(pillar.id).length}
+                  onEditKPI={setEditingKPI}
+                  onViewInitiatives={() => navigate(`/portfolio?pillar=${pillar.id}`)}
+                />
+              </div>
+            ))
+        )}
       </div>
 
       {/* Edit KPI Modal */}
@@ -399,6 +426,17 @@ export const StrategyHubPage: React.FC = () => {
           onClose={() => setEditingKPI(null)}
         />
       )}
+
+      {/* Add Pillar Modal */}
+      <Modal
+        isOpen={isAddPillarModalOpen}
+        onClose={() => setIsAddPillarModalOpen(false)}
+        title="Add New Strategy Pillar"
+      >
+        <PillarForm
+          onClose={() => setIsAddPillarModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 };

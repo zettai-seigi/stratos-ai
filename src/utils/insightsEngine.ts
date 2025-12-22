@@ -763,6 +763,16 @@ export function generateExecutiveSummary(insights: RuleBasedInsight[]): {
   const warnings = insights.filter(i => i.severity === 'warning');
   const successes = insights.filter(i => i.severity === 'success');
 
+  // If no insights at all, return empty - likely no data exists
+  if (insights.length === 0) {
+    return {
+      summary: '',
+      keyRisks: [],
+      opportunities: [],
+      recommendations: [],
+    };
+  }
+
   // Build summary
   let summary = '';
   if (counts.critical > 0) {

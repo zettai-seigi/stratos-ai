@@ -5,7 +5,7 @@ import { RAGStatusLabel, Modal, InfoTooltip } from '../shared';
 import { InitiativeForm } from '../forms/InitiativeForm';
 import { formatCurrency } from '../../utils/calculations';
 import { calculateRiskScore as calculateComprehensiveRisk, getRiskColorClass, formatPerformanceIndex } from '../../utils/riskScore';
-import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info, FileText, TrendingUp, TrendingDown, Clock, DollarSign, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info, FileText, TrendingUp, TrendingDown, Clock, DollarSign, Users, Plus } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 interface DataGridProps {
@@ -25,6 +25,7 @@ export const DataGrid: React.FC<DataGridProps> = ({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
   const [showRiskTooltip, setShowRiskTooltip] = useState<string | null>(null);
+  const [isAddInitiativeModalOpen, setIsAddInitiativeModalOpen] = useState(false);
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -56,8 +57,17 @@ export const DataGrid: React.FC<DataGridProps> = ({
 
   return (
     <div className="bg-bg-card rounded-xl border border-border overflow-hidden">
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <h3 className="text-lg font-semibold text-text-primary">Initiative & Project Data Grid</h3>
+        {pillars.length > 0 && (
+          <button
+            onClick={() => setIsAddInitiativeModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent-blue hover:bg-accent-blue/10 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Initiative
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -339,6 +349,26 @@ export const DataGrid: React.FC<DataGridProps> = ({
                 </React.Fragment>
               );
             })}
+            {initiatives.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center">
+                  <div className="text-text-muted mb-2">No initiatives found</div>
+                  {pillars.length > 0 ? (
+                    <button
+                      onClick={() => setIsAddInitiativeModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm text-accent-blue hover:bg-accent-blue/10 rounded-lg transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add your first initiative
+                    </button>
+                  ) : (
+                    <div className="text-sm text-text-secondary">
+                      Create strategy pillars first in the Strategy Hub
+                    </div>
+                  )}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -360,6 +390,18 @@ export const DataGrid: React.FC<DataGridProps> = ({
             }}
           />
         )}
+      </Modal>
+
+      {/* Add Initiative Modal */}
+      <Modal
+        isOpen={isAddInitiativeModalOpen}
+        onClose={() => setIsAddInitiativeModalOpen(false)}
+        title="Add New Initiative"
+        size="lg"
+      >
+        <InitiativeForm
+          onClose={() => setIsAddInitiativeModalOpen(false)}
+        />
       </Modal>
     </div>
   );

@@ -29,6 +29,7 @@ import {
   Loader2,
   FileText,
   GitBranch,
+  Plus,
 } from 'lucide-react';
 
 type TabType = 'overview' | 'execution' | 'wbs' | 'team' | 'kpis';
@@ -44,6 +45,7 @@ const ProjectListView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<RAGStatus | 'all'>('all');
   const [pillarFilter, setPillarFilter] = useState<string>(searchParams.get('pillar') || 'all');
   const [initiativeFilter, setInitiativeFilter] = useState<string>(searchParams.get('initiative') || 'all');
+  const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
 
   // Filter projects based on search and filters
   const filteredProjects = useMemo(() => {
@@ -98,9 +100,16 @@ const ProjectListView: React.FC = () => {
           <h1 className="text-2xl font-bold text-text-primary">Project Execution</h1>
           <p className="text-text-secondary mt-1">Select a project to manage tasks and track progress</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
-          <FolderKanban className="w-5 h-5 text-accent-cyan" />
-          <span className="text-sm text-text-secondary">Execution Board</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
+            <FolderKanban className="w-5 h-5 text-accent-cyan" />
+            <span className="text-sm text-text-secondary">Execution Board</span>
+          </div>
+          {initiatives.length > 0 && (
+            <Button onClick={() => setIsAddProjectModalOpen(true)} icon={<Plus className="w-4 h-4" />}>
+              Add Project
+            </Button>
+          )}
         </div>
       </div>
 
@@ -225,7 +234,23 @@ const ProjectListView: React.FC = () => {
         {groupedProjects.length === 0 ? (
           <div className="bg-bg-card rounded-xl border border-border p-8 text-center">
             <FolderKanban className="w-12 h-12 text-text-muted mx-auto mb-3" />
-            <p className="text-text-secondary">No projects found matching your filters</p>
+            <p className="text-text-secondary mb-4">
+              {searchTerm || statusFilter !== 'all' || pillarFilter !== 'all' || initiativeFilter !== 'all'
+                ? 'No projects found matching your filters'
+                : initiatives.length === 0
+                ? 'No initiatives exist yet. Create an initiative first in Portfolio.'
+                : 'No projects exist yet. Create your first project!'}
+            </p>
+            {initiatives.length > 0 && !searchTerm && statusFilter === 'all' && pillarFilter === 'all' && initiativeFilter === 'all' && (
+              <Button onClick={() => setIsAddProjectModalOpen(true)} icon={<Plus className="w-4 h-4" />}>
+                Add Project
+              </Button>
+            )}
+            {initiatives.length === 0 && (
+              <Button onClick={() => navigate('/portfolio')} variant="secondary">
+                Go to Portfolio
+              </Button>
+            )}
           </div>
         ) : (
           groupedProjects.map(({ initiative, projects: initiativeProjects }) => {
@@ -335,6 +360,18 @@ const ProjectListView: React.FC = () => {
           })
         )}
       </div>
+
+      {/* Add Project Modal */}
+      <Modal
+        isOpen={isAddProjectModalOpen}
+        onClose={() => setIsAddProjectModalOpen(false)}
+        title="Add New Project"
+        size="lg"
+      >
+        <ProjectForm
+          onClose={() => setIsAddProjectModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 };

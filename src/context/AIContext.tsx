@@ -169,6 +169,12 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Fallback generators when AI is not configured or hasn't loaded
   function generateFallbackSummary(): string {
     const { pillars, initiatives, projects, tasks } = state;
+
+    // If no data at all, return empty
+    if (pillars.length === 0 && initiatives.length === 0 && projects.length === 0) {
+      return '';
+    }
+
     const redPillars = pillars.filter(p => p.ragStatus === 'red').length;
     const blockedTasks = tasks.filter(t => t.kanbanStatus === 'blocked').length;
     const atRiskInitiatives = initiatives.filter(i => i.ragStatus !== 'green').length;

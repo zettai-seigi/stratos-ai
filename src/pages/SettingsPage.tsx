@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/shared';
 import {
   RefreshCw, Database, AlertTriangle, Info, Settings, Sparkles, Eye, EyeOff,
   CheckCircle, XCircle, Loader2, Trash2, Target, Layers, Briefcase, ListTodo,
-  Users, Flag, BarChart3, ChevronDown, ChevronRight
+  Users, Flag, BarChart3, ChevronDown, ChevronRight, Building2, Wand2
 } from 'lucide-react';
 import { getAPIKey, setAPIKey, removeAPIKey, clearAICache, analyzeWithAI } from '../services/aiService';
 import { AppState } from '../types';
 import { BusinessRulesSettings } from '../components/settings/BusinessRulesSettings';
+import { OrganizationSettings } from '../components/settings/OrganizationSettings';
 
 // Entity configuration for data management
 interface EntityConfig {
@@ -80,7 +82,8 @@ const ENTITY_CONFIGS: EntityConfig[] = [
 ];
 
 export const SettingsPage: React.FC = () => {
-  const { state, dispatch, resetToSeedData } = useApp();
+  const { state, dispatch, resetToSeedData, isSetupWizardCompleted } = useApp();
+  const navigate = useNavigate();
   const [expandedDataSection, setExpandedDataSection] = useState(false);
 
   // AI Configuration state
@@ -389,8 +392,78 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Setup Wizard */}
+      <div className="w-full bg-bg-card rounded-xl border border-border p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <Building2 className="w-5 h-5 text-accent-cyan" />
+          <h2 className="text-lg font-semibold text-text-primary">Corporate Structure</h2>
+          {isSetupWizardCompleted() ? (
+            <span className="flex items-center gap-1 text-xs text-rag-green bg-rag-green/10 px-2 py-1 rounded-full">
+              <CheckCircle className="w-3 h-3" /> Configured
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs text-rag-amber bg-rag-amber/10 px-2 py-1 rounded-full">
+              <AlertTriangle className="w-3 h-3" /> Not Configured
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Use the Setup Wizard to configure your corporate hierarchy (Corporation → Holdings → Companies)
+            and organizational structure (Directorate → Division → Department → Section).
+          </p>
+
+          <div className="flex items-center justify-between p-4 bg-bg-hover rounded-lg">
+            <div>
+              <h3 className="text-sm font-medium text-text-primary">Setup Wizard</h3>
+              <p className="text-xs text-text-muted mt-1">
+                Configure corporate entities, organizational units, and BSC structure.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate('/setup-wizard')}
+              variant="primary"
+              size="sm"
+              icon={<Wand2 className="w-4 h-4" />}
+            >
+              {isSetupWizardCompleted() ? 'Reconfigure' : 'Start Setup'}
+            </Button>
+          </div>
+
+          {/* Corporate entities count */}
+          {state.corporateEntities && state.corporateEntities.length > 0 && (
+            <div className="grid grid-cols-3 gap-4 pt-2">
+              <div className="text-center p-3 bg-bg-primary rounded-lg">
+                <div className="text-2xl font-bold text-accent-blue">
+                  {state.corporateEntities.filter(e => e.entityType === 'corporation').length}
+                </div>
+                <div className="text-xs text-text-muted">Corporations</div>
+              </div>
+              <div className="text-center p-3 bg-bg-primary rounded-lg">
+                <div className="text-2xl font-bold text-accent-purple">
+                  {state.corporateEntities.filter(e => e.entityType === 'holding').length}
+                </div>
+                <div className="text-xs text-text-muted">Holdings</div>
+              </div>
+              <div className="text-center p-3 bg-bg-primary rounded-lg">
+                <div className="text-2xl font-bold text-rag-green">
+                  {state.corporateEntities.filter(e => e.entityType === 'company').length}
+                </div>
+                <div className="text-xs text-text-muted">Companies</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Business Rules & Enforcement */}
       <BusinessRulesSettings />
+
+      {/* Organization Hierarchy */}
+      <div className="w-full bg-bg-card rounded-xl border border-border p-5">
+        <OrganizationSettings />
+      </div>
 
       {/* Storage Info */}
       <div className="w-full bg-bg-card rounded-xl border border-border p-5">
