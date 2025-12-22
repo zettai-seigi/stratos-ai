@@ -142,7 +142,6 @@ export const HelpPage: React.FC = () => {
         <AccordionItem
           title="The Golden Thread Hierarchy"
           icon={<Layers className="w-5 h-5" />}
-          defaultOpen={true}
         >
           <div className="space-y-4">
             <p className="text-sm text-text-secondary">
@@ -254,58 +253,131 @@ export const HelpPage: React.FC = () => {
         </AccordionItem>
 
         <AccordionItem
-          title="AI Risk Score Calculation"
+          title="Risk Score Calculation"
           icon={<Calculator className="w-5 h-5" />}
         >
           <div className="space-y-4">
             <p className="text-sm text-text-secondary">
-              The AI Risk Score (0-100) is calculated based on multiple factors to help identify initiatives
-              that need attention. Here's how it works:
+              The Risk Score (0-100) provides a comprehensive assessment of initiative health based on
+              the project management "holy trinity" of <strong>Cost, Scope, and Time</strong>, plus
+              resource and quality dimensions. A score of 0 means everything is on track.
             </p>
 
+            {/* The Five Dimensions */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              <div className="p-3 bg-bg-hover rounded-lg text-center">
+                <div className="text-lg font-bold text-accent-blue mb-1">⏱️</div>
+                <p className="text-xs font-medium text-text-primary">Time</p>
+                <p className="text-[10px] text-text-muted">25% weight</p>
+              </div>
+              <div className="p-3 bg-bg-hover rounded-lg text-center">
+                <div className="text-lg font-bold text-accent-blue mb-1">💰</div>
+                <p className="text-xs font-medium text-text-primary">Cost</p>
+                <p className="text-[10px] text-text-muted">25% weight</p>
+              </div>
+              <div className="p-3 bg-bg-hover rounded-lg text-center">
+                <div className="text-lg font-bold text-accent-blue mb-1">📋</div>
+                <p className="text-xs font-medium text-text-primary">Scope</p>
+                <p className="text-[10px] text-text-muted">20% weight</p>
+              </div>
+              <div className="p-3 bg-bg-hover rounded-lg text-center">
+                <div className="text-lg font-bold text-accent-blue mb-1">👥</div>
+                <p className="text-xs font-medium text-text-primary">Resource</p>
+                <p className="text-[10px] text-text-muted">15% weight</p>
+              </div>
+              <div className="p-3 bg-bg-hover rounded-lg text-center">
+                <div className="text-lg font-bold text-accent-blue mb-1">✓</div>
+                <p className="text-xs font-medium text-text-primary">Quality</p>
+                <p className="text-[10px] text-text-muted">15% weight</p>
+              </div>
+            </div>
+
+            {/* Performance Indices */}
             <div className="bg-bg-hover rounded-lg p-4">
-              <h4 className="font-medium text-text-primary mb-3">Scoring Formula</h4>
+              <h4 className="font-medium text-text-primary mb-3">Key Performance Indices</h4>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-text-secondary">Base Score</span>
-                  <span className="font-mono text-text-primary">50 points</span>
+                  <div>
+                    <span className="text-text-primary font-medium">SPI (Schedule Performance Index)</span>
+                    <p className="text-xs text-text-muted">% Complete ÷ % Time Elapsed</p>
+                  </div>
+                  <span className="text-text-secondary">1.0 = On schedule</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-text-secondary">Red RAG Status</span>
-                  <span className="font-mono text-rag-red">+30 points</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-text-secondary">Amber RAG Status</span>
-                  <span className="font-mono text-rag-amber">+15 points</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-text-secondary">Budget Overrun &gt;10%</span>
-                  <span className="font-mono text-rag-red">+20 points</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-text-secondary">Budget Overrun 0-10%</span>
-                  <span className="font-mono text-rag-amber">+10 points</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-text-secondary">Each Red Project</span>
-                  <span className="font-mono text-rag-red">+10 points</span>
+                  <div>
+                    <span className="text-text-primary font-medium">CPI (Cost Performance Index)</span>
+                    <p className="text-xs text-text-muted">% Complete ÷ % Budget Spent</p>
+                  </div>
+                  <span className="text-text-secondary">1.0 = On budget</span>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            {/* Risk Factors by Dimension */}
+            <div className="bg-bg-hover rounded-lg p-4">
+              <h4 className="font-medium text-text-primary mb-3">Risk Factors Evaluated</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-xs font-semibold text-accent-blue mb-2">Schedule (Time)</p>
+                  <ul className="text-text-secondary space-y-1 text-xs">
+                    <li>• SPI below target (behind schedule)</li>
+                    <li>• Overdue tasks percentage</li>
+                    <li>• Projects significantly behind</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-rag-green mb-2">Cost (Budget)</p>
+                  <ul className="text-text-secondary space-y-1 text-xs">
+                    <li>• CPI below target (over budget)</li>
+                    <li>• Budget variance percentage</li>
+                    <li>• Projects exceeding budget</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-accent-purple mb-2">Scope (Delivery)</p>
+                  <ul className="text-text-secondary space-y-1 text-xs">
+                    <li>• Completion vs timeline gap</li>
+                    <li>• Scope change requests</li>
+                    <li>• Task completion rate</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-rag-amber mb-2">Resource &amp; Quality</p>
+                  <ul className="text-text-secondary space-y-1 text-xs">
+                    <li>• Over-allocated team members</li>
+                    <li>• Key person dependencies</li>
+                    <li>• Blocked tasks ratio</li>
+                    <li>• RAG status indicators</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Risk Levels */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="p-3 bg-rag-green/10 border border-rag-green/30 rounded-lg text-center">
-                <p className="text-2xl font-bold text-rag-green">0-50</p>
-                <p className="text-sm text-text-secondary">Low Risk</p>
+                <p className="text-xl font-bold text-rag-green">0-25</p>
+                <p className="text-sm text-text-secondary">Low</p>
               </div>
               <div className="p-3 bg-rag-amber/10 border border-rag-amber/30 rounded-lg text-center">
-                <p className="text-2xl font-bold text-rag-amber">51-70</p>
-                <p className="text-sm text-text-secondary">Medium Risk</p>
+                <p className="text-xl font-bold text-rag-amber">26-50</p>
+                <p className="text-sm text-text-secondary">Medium</p>
               </div>
               <div className="p-3 bg-rag-red/10 border border-rag-red/30 rounded-lg text-center">
-                <p className="text-2xl font-bold text-rag-red">71-100</p>
-                <p className="text-sm text-text-secondary">High Risk</p>
+                <p className="text-xl font-bold text-rag-red">51-75</p>
+                <p className="text-sm text-text-secondary">High</p>
               </div>
+              <div className="p-3 bg-rag-red/20 border border-rag-red/50 rounded-lg text-center">
+                <p className="text-xl font-bold text-rag-red">76-100</p>
+                <p className="text-sm text-text-secondary">Critical</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
+              <p className="text-sm text-text-primary">
+                <strong>Tip:</strong> Click on any Risk Score in the Portfolio grid to see the detailed
+                breakdown including SPI, CPI, and individual risk factors contributing to the score.
+              </p>
             </div>
           </div>
         </AccordionItem>
@@ -444,7 +516,7 @@ export const HelpPage: React.FC = () => {
 
             <div className="p-4 bg-rag-amber/10 border border-rag-amber/30 rounded-lg">
               <p className="text-sm text-text-primary">
-                <strong>Tip:</strong> Budget overruns impact the AI Risk Score. Initiatives exceeding
+                <strong>Tip:</strong> Budget overruns impact the Risk Score. Initiatives exceeding
                 budget by more than 10% receive a significant risk penalty.
               </p>
             </div>
@@ -481,11 +553,11 @@ export const HelpPage: React.FC = () => {
               <div className="p-4 bg-bg-hover rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <FileUp className="w-5 h-5 text-rag-green" />
-                  <span className="font-medium text-text-primary">Import</span>
+                  <span className="font-medium text-text-primary">Smart Import</span>
                 </div>
                 <p className="text-sm text-text-secondary">
-                  Upload Excel files to bulk-create or update data. The system validates all parent
-                  references to maintain the Golden Thread hierarchy.
+                  Upload Excel files and use the spreadsheet view to map your data to entity fields.
+                  Select cells and assign labels from the sidebar.
                 </p>
                 <Link
                   to="/import"
@@ -493,6 +565,53 @@ export const HelpPage: React.FC = () => {
                 >
                   Go to Import <ArrowRight className="w-3 h-3" />
                 </Link>
+              </div>
+            </div>
+
+            {/* Smart Import How-To */}
+            <div className="mt-4 p-4 bg-accent-purple/10 border border-accent-purple/30 rounded-lg">
+              <h4 className="font-medium text-text-primary mb-3 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-accent-purple" />
+                How to Use Smart Import
+              </h4>
+              <ol className="text-sm text-text-secondary space-y-2 list-decimal ml-4">
+                <li><strong>Upload:</strong> Drag and drop or select your Excel file (.xlsx, .xls)</li>
+                <li><strong>Select Sheet:</strong> Choose which sheets to import and set entity type for each (Pillar, Initiative, Project, Task, etc.)</li>
+                <li><strong>Map Data:</strong> In the spreadsheet view:
+                  <ul className="list-disc ml-4 mt-1">
+                    <li>Click cells to select, drag to select range, Ctrl/Cmd+click for multi-select</li>
+                    <li>Choose a label from the sidebar (entity fields or reference data)</li>
+                    <li>Click "Assign" to map selected cells to the label</li>
+                    <li>Double-click any cell to edit its value</li>
+                  </ul>
+                </li>
+                <li><strong>Preview:</strong> Review validation results before importing</li>
+                <li><strong>Import:</strong> Confirm and import your data into the system</li>
+              </ol>
+            </div>
+
+            {/* PMO Recommended Workflow */}
+            <div className="mt-4 p-4 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
+              <h4 className="font-medium text-text-primary mb-3">PMO Recommended Workflow</h4>
+              <div className="text-sm text-text-secondary space-y-2">
+                <p><strong>For Initial Setup:</strong></p>
+                <ol className="list-decimal ml-4 space-y-1">
+                  <li>First import <strong>Strategy Pillars</strong> (BSC perspectives) - these are the foundation</li>
+                  <li>Then import <strong>KPIs</strong> linked to pillars (strategic metrics)</li>
+                  <li>Add <strong>Initiatives</strong> linked to pillars (programs/portfolios)</li>
+                  <li>Create <strong>Projects</strong> linked to initiatives</li>
+                  <li>Finally, add <strong>Tasks</strong> and <strong>Resources</strong></li>
+                </ol>
+                <p className="mt-3"><strong>Essential Fields by Entity:</strong></p>
+                <ul className="list-disc ml-4 space-y-1">
+                  <li><strong>Pillar:</strong> Name (required), RAG Status</li>
+                  <li><strong>KPI:</strong> Name, Pillar*, Target Value, Current Value</li>
+                  <li><strong>Initiative:</strong> Name, Pillar*, Owner, Start/End Dates, Budget</li>
+                  <li><strong>Project:</strong> Name, Initiative*, Manager, Status, Dates, Budget</li>
+                  <li><strong>Task:</strong> Title, Project*, Assignee, Due Date, Status</li>
+                  <li><strong>Resource:</strong> Name, Email, Role, Department</li>
+                </ul>
+                <p className="text-xs mt-2 italic">* Required parent reference</p>
               </div>
             </div>
           </div>
@@ -509,13 +628,6 @@ export const HelpPage: React.FC = () => {
 
             <div className="space-y-3">
               <div className="p-3 bg-bg-hover rounded-lg">
-                <p className="font-medium text-text-primary">Theme</p>
-                <p className="text-sm text-text-secondary mt-1">
-                  Switch between Light and Dark themes based on your preference.
-                </p>
-              </div>
-
-              <div className="p-3 bg-bg-hover rounded-lg">
                 <p className="font-medium text-text-primary">Claude API Key</p>
                 <p className="text-sm text-text-secondary mt-1">
                   Enter your Anthropic API key to enable AI-powered insights and suggestions.
@@ -523,9 +635,32 @@ export const HelpPage: React.FC = () => {
               </div>
 
               <div className="p-3 bg-bg-hover rounded-lg">
-                <p className="font-medium text-text-primary">Data Management</p>
+                <p className="font-medium text-text-primary">Data Storage</p>
                 <p className="text-sm text-text-secondary mt-1">
-                  Reset data to defaults or clear all data. Use with caution - these actions cannot be undone.
+                  View storage usage and entity breakdown. Expand to see counts for each entity type.
+                </p>
+              </div>
+
+              <div className="p-3 bg-bg-hover rounded-lg">
+                <p className="font-medium text-text-primary">Entity Management</p>
+                <p className="text-sm text-text-secondary mt-1">
+                  Clear specific entity types (Pillars, KPIs, Initiatives, Projects, Tasks, Resources, Milestones).
+                  System warns you about orphaned child records before deletion.
+                </p>
+              </div>
+
+              <div className="p-3 bg-bg-hover rounded-lg">
+                <p className="font-medium text-text-primary">Orphan Cleanup</p>
+                <p className="text-sm text-text-secondary mt-1">
+                  If you have items with invalid parent references (e.g., a Task pointing to a deleted Project),
+                  the system will detect and let you clean them up.
+                </p>
+              </div>
+
+              <div className="p-3 bg-bg-hover rounded-lg">
+                <p className="font-medium text-text-primary">Reset / Clear All</p>
+                <p className="text-sm text-text-secondary mt-1">
+                  Reset to demo data or clear everything. Use with caution - these actions cannot be undone.
                 </p>
               </div>
             </div>

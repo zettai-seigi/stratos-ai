@@ -366,15 +366,10 @@ export const OperationalDashboard: React.FC = () => {
   }
 
   // AI Fix-it suggestion based on project status
-  // Use AI context for suggestions
+  // Use AI context for suggestions - only show when there's an actual warning
   const { isLoading: aiLoading, getProjectAISuggestion } = useAI();
 
-  const getAISuggestion = () => {
-    if (project) {
-      return getProjectAISuggestion(project.id);
-    }
-    return 'Project is progressing well. No immediate actions required.';
-  };
+  const aiSuggestion = project ? getProjectAISuggestion(project.id) : null;
 
   const handleAddTask = (parentTaskId?: string) => {
     setEditingTask(undefined);
@@ -472,8 +467,8 @@ export const OperationalDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* AI Suggestion */}
-        {(project.ragStatus === 'amber' || project.ragStatus === 'red') && (
+        {/* AI Suggestion - only show when there's an actual warning */}
+        {aiSuggestion && (
           <div
             onClick={() => navigate('/insights')}
             className="flex items-start gap-3 p-3 bg-rag-amber/10 rounded-lg border border-rag-amber/30 cursor-pointer hover:bg-rag-amber/20 transition-colors group"
@@ -484,10 +479,8 @@ export const OperationalDashboard: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-rag-amber flex-shrink-0 mt-0.5" />
             )}
             <div className="flex-1">
-              <span className="text-sm font-semibold text-rag-amber">AI Fix-it Suggestion: </span>
-              <span className="text-sm text-text-primary">
-                {aiLoading ? 'Analyzing project data...' : getAISuggestion()}
-              </span>
+              <span className="text-sm font-semibold text-rag-amber">Warning: </span>
+              <span className="text-sm text-text-primary">{aiSuggestion}</span>
             </div>
             <ArrowRight className="w-4 h-4 text-rag-amber opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
           </div>

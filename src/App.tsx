@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AIProvider } from './context/AIContext';
+import { ConfigProvider } from './context/ConfigContext';
 import { Layout } from './components/layout/Layout';
 import { StrategicCommandCenter } from './components/dashboard/StrategicCommandCenter';
 import { PortfolioHub } from './components/dashboard/PortfolioHub';
@@ -19,28 +20,30 @@ import './index.css';
 function App() {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <AIProvider>
-        <HashRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<StrategicCommandCenter />} />
-            <Route path="strategy" element={<StrategyHubPage />} />
-            <Route path="portfolio" element={<PortfolioHub />} />
-            <Route path="execution" element={<OperationalDashboard />} />
-            <Route path="execution/:projectId" element={<OperationalDashboard />} />
-            <Route path="project/:projectId" element={<ProjectCharterPage />} />
-            <Route path="insights" element={<AIInsightsPage />} />
-            <Route path="export" element={<ExportPage />} />
-            <Route path="import" element={<ImportPage />} />
-            <Route path="resources" element={<ResourcesPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="help" element={<HelpPage />} />
-          </Route>
-        </Routes>
-        </HashRouter>
-        </AIProvider>
-      </AppProvider>
+      <ConfigProvider>
+        <AppProvider>
+          <AIProvider>
+            <HashRouter>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<StrategicCommandCenter />} />
+                  <Route path="strategy" element={<StrategyHubPage />} />
+                  <Route path="portfolio" element={<PortfolioHub />} />
+                  <Route path="execution" element={<OperationalDashboard />} />
+                  <Route path="execution/:projectId" element={<OperationalDashboard />} />
+                  <Route path="project/:projectId" element={<ProjectCharterPage />} />
+                  <Route path="insights" element={<AIInsightsPage />} />
+                  <Route path="export" element={<ExportPage />} />
+                  <Route path="import" element={<ImportPage />} />
+                  <Route path="resources" element={<ResourcesPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="help" element={<HelpPage />} />
+                </Route>
+              </Routes>
+            </HashRouter>
+          </AIProvider>
+        </AppProvider>
+      </ConfigProvider>
     </ThemeProvider>
   );
 }

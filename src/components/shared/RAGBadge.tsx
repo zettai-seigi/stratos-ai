@@ -26,7 +26,9 @@ export const RAGBadge: React.FC<RAGBadgeProps> = ({
   showLabel = false,
   onClick,
 }) => {
-  const { bg, text, label } = statusColors[status];
+  // Defensive check for invalid status values
+  const validStatus = statusColors[status] ? status : 'green';
+  const { bg, text, label } = statusColors[validStatus];
   const isClickable = !!onClick;
 
   return (
@@ -51,7 +53,9 @@ interface RAGStatusLabelProps {
 }
 
 export const RAGStatusLabel: React.FC<RAGStatusLabelProps> = ({ status, onClick }) => {
-  const { bg } = statusColors[status];
+  // Defensive check for invalid status values
+  const validStatus = statusColors[status] ? status : 'green';
+  const { bg } = statusColors[validStatus];
   const isClickable = !!onClick;
 
   return (

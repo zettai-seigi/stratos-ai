@@ -1,11 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/shared';
-import { RefreshCw, Database, AlertTriangle, Info, Settings, Sparkles, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import {
+  RefreshCw, Database, AlertTriangle, Info, Settings, Sparkles, Eye, EyeOff,
+  CheckCircle, XCircle, Loader2, Trash2, Target, Layers, Briefcase, ListTodo,
+  Users, Flag, BarChart3, ChevronDown, ChevronRight
+} from 'lucide-react';
 import { getAPIKey, setAPIKey, removeAPIKey, clearAICache, analyzeWithAI } from '../services/aiService';
+import { AppState } from '../types';
+import { BusinessRulesSettings } from '../components/settings/BusinessRulesSettings';
+
+// Entity configuration for data management
+interface EntityConfig {
+  key: keyof AppState;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  children?: (keyof AppState)[];
+  parentKey?: keyof AppState;
+  parentIdField?: string;
+}
+
+const ENTITY_CONFIGS: EntityConfig[] = [
+  {
+    key: 'pillars',
+    label: 'Strategy Pillars',
+    icon: <Target className="w-4 h-4" />,
+    color: 'text-accent-blue',
+    children: ['kpis', 'initiatives'],
+  },
+  {
+    key: 'kpis',
+    label: 'KPIs',
+    icon: <BarChart3 className="w-4 h-4" />,
+    color: 'text-rag-green',
+    parentKey: 'pillars',
+    parentIdField: 'pillarId',
+  },
+  {
+    key: 'initiatives',
+    label: 'Initiatives',
+    icon: <Layers className="w-4 h-4" />,
+    color: 'text-accent-purple',
+    parentKey: 'pillars',
+    parentIdField: 'pillarId',
+    children: ['projects'],
+  },
+  {
+    key: 'projects',
+    label: 'Projects',
+    icon: <Briefcase className="w-4 h-4" />,
+    color: 'text-accent-cyan',
+    parentKey: 'initiatives',
+    parentIdField: 'initiativeId',
+    children: ['tasks', 'milestones'],
+  },
+  {
+    key: 'tasks',
+    label: 'Tasks',
+    icon: <ListTodo className="w-4 h-4" />,
+    color: 'text-rag-amber',
+    parentKey: 'projects',
+    parentIdField: 'projectId',
+  },
+  {
+    key: 'resources',
+    label: 'Resources',
+    icon: <Users className="w-4 h-4" />,
+    color: 'text-accent-teal',
+  },
+  {
+    key: 'milestones',
+    label: 'Milestones',
+    icon: <Flag className="w-4 h-4" />,
+    color: 'text-rag-red',
+    parentKey: 'projects',
+    parentIdField: 'projectId',
+  },
+];
 
 export const SettingsPage: React.FC = () => {
-  const { state, resetToSeedData } = useApp();
+  const { state, dispatch, resetToSeedData } = useApp();
+  const [expandedDataSection, setExpandedDataSection] = useState(false);
 
   // AI Configuration state
   const [apiKey, setApiKeyState] = useState('');
@@ -77,10 +153,133 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleClearData = () => {
-    if (confirm('Are you sure you want to clear ALL data? This cannot be undone.')) {
-      localStorage.removeItem('stratos-ai-data');
-      window.location.reload();
+    const totalRecords = state.pillars.length + state.kpis.length + state.initiatives.length +
+      state.projects.length + state.tasks.length + state.resources.length + (state.milestones?.length || 0);
+
+    if (confirm(`Are you sure you want to DELETE ALL ${totalRecords} records?\n\nThis will remove everything including sample data.\nYou can restore sample data using "Reset to Demo Data" afterward.\n\nThis cannot be undone.`)) {
+      // Set state to empty (not localStorage.removeItem which would reload seed data)
+      const emptyState: AppState = {
+        pillars: [],
+        kpis: [],
+        initiatives: [],
+        projects: [],
+        tasks: [],
+        resources: [],
+        milestones: [],
+      };
+      dispatch({ type: 'SET_STATE', payload: emptyState });
     }
+  };
+
+  // Get count of items for an entity type
+  const getEntityCount = (key: keyof AppState): number => {
+    const data = state[key];
+    return Array.isArray(data) ? data.length : 0;
+  };
+
+  // Calculate orphan count if parent entities are cleared
+  const getOrphanCount = (config: EntityConfig): { count: number; types: string[] } => {
+    if (!config.children) return { count: 0, types: [] };
+
+    let count = 0;
+    const types: string[] = [];
+
+    for (const childKey of config.children) {
+      const childCount = getEntityCount(childKey);
+      if (childCount > 0) {
+        count += childCount;
+        const childConfig = ENTITY_CONFIGS.find((c) => c.key === childKey);
+        if (childConfig) types.push(childConfig.label);
+      }
+    }
+
+    return { count, types };
+  };
+
+  // Clear a specific entity type
+  const handleClearEntityType = (config: EntityConfig) => {
+    const count = getEntityCount(config.key);
+    if (count === 0) return;
+
+    const orphanInfo = getOrphanCount(config);
+
+    let message = `Are you sure you want to delete all ${count} ${config.label}?`;
+
+    if (orphanInfo.count > 0) {
+      message += `\n\nWARNING: This will orphan ${orphanInfo.count} related items:\n• ${orphanInfo.types.join('\n• ')}\n\nOrphaned items will have invalid parent references.`;
+    }
+
+    if (confirm(message)) {
+      // Create a new state with the entity cleared
+      const newState: AppState = {
+        ...state,
+        [config.key]: [],
+      };
+
+      dispatch({ type: 'SET_STATE', payload: newState });
+    }
+  };
+
+  // Clear orphaned records (items with invalid parent references)
+  const getOrphanedRecords = useMemo(() => {
+    const orphaned: { key: keyof AppState; label: string; count: number }[] = [];
+
+    // Check KPIs with invalid pillar references
+    const validPillarIds = new Set(state.pillars.map((p) => p.id));
+    const orphanedKpis = state.kpis.filter((k) => !validPillarIds.has(k.pillarId));
+    if (orphanedKpis.length > 0) {
+      orphaned.push({ key: 'kpis', label: 'KPIs', count: orphanedKpis.length });
+    }
+
+    // Check Initiatives with invalid pillar references
+    const orphanedInitiatives = state.initiatives.filter((i) => !validPillarIds.has(i.pillarId));
+    if (orphanedInitiatives.length > 0) {
+      orphaned.push({ key: 'initiatives', label: 'Initiatives', count: orphanedInitiatives.length });
+    }
+
+    // Check Projects with invalid initiative references
+    const validInitiativeIds = new Set(state.initiatives.map((i) => i.id));
+    const orphanedProjects = state.projects.filter((p) => !validInitiativeIds.has(p.initiativeId));
+    if (orphanedProjects.length > 0) {
+      orphaned.push({ key: 'projects', label: 'Projects', count: orphanedProjects.length });
+    }
+
+    // Check Tasks with invalid project references
+    const validProjectIds = new Set(state.projects.map((p) => p.id));
+    const orphanedTasks = state.tasks.filter((t) => !validProjectIds.has(t.projectId));
+    if (orphanedTasks.length > 0) {
+      orphaned.push({ key: 'tasks', label: 'Tasks', count: orphanedTasks.length });
+    }
+
+    // Check Milestones with invalid project references
+    const orphanedMilestones = (state.milestones || []).filter((m) => !validProjectIds.has(m.projectId));
+    if (orphanedMilestones.length > 0) {
+      orphaned.push({ key: 'milestones', label: 'Milestones', count: orphanedMilestones.length });
+    }
+
+    return orphaned;
+  }, [state]);
+
+  const handleCleanupOrphans = () => {
+    if (getOrphanedRecords.length === 0) return;
+
+    const totalOrphans = getOrphanedRecords.reduce((sum, o) => sum + o.count, 0);
+    if (!confirm(`Delete ${totalOrphans} orphaned records? This cannot be undone.`)) return;
+
+    const validPillarIds = new Set(state.pillars.map((p) => p.id));
+    const validInitiativeIds = new Set(state.initiatives.map((i) => i.id));
+    const validProjectIds = new Set(state.projects.map((p) => p.id));
+
+    const newState: AppState = {
+      ...state,
+      kpis: state.kpis.filter((k) => validPillarIds.has(k.pillarId)),
+      initiatives: state.initiatives.filter((i) => validPillarIds.has(i.pillarId)),
+      projects: state.projects.filter((p) => validInitiativeIds.has(p.initiativeId)),
+      tasks: state.tasks.filter((t) => validProjectIds.has(t.projectId)),
+      milestones: (state.milestones || []).filter((m) => validProjectIds.has(m.projectId)),
+    };
+
+    dispatch({ type: 'SET_STATE', payload: newState });
   };
 
   // Calculate storage usage
@@ -190,6 +389,9 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Business Rules & Enforcement */}
+      <BusinessRulesSettings />
+
       {/* Storage Info */}
       <div className="w-full bg-bg-card rounded-xl border border-border p-5">
         <div className="flex items-center gap-3 mb-4">
@@ -210,9 +412,96 @@ export const SettingsPage: React.FC = () => {
             <span className="text-text-secondary">Total Records</span>
             <span className="text-text-primary">
               {state.pillars.length + state.kpis.length + state.initiatives.length +
-               state.projects.length + state.tasks.length + state.resources.length}
+               state.projects.length + state.tasks.length + state.resources.length + (state.milestones?.length || 0)}
             </span>
           </div>
+        </div>
+
+        {/* Expandable Entity Breakdown */}
+        <div className="mt-4 border-t border-border pt-4">
+          <button
+            onClick={() => setExpandedDataSection(!expandedDataSection)}
+            className="w-full flex items-center justify-between text-sm text-text-secondary hover:text-text-primary"
+          >
+            <span className="font-medium">Entity Breakdown & Management</span>
+            {expandedDataSection ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+          </button>
+
+          {expandedDataSection && (
+            <div className="mt-4 space-y-2">
+              {ENTITY_CONFIGS.map((config) => {
+                const count = getEntityCount(config.key);
+                const orphanInfo = getOrphanCount(config);
+
+                return (
+                  <div
+                    key={config.key}
+                    className="flex items-center justify-between p-3 bg-bg-hover rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={config.color}>{config.icon}</span>
+                      <div>
+                        <span className="text-sm font-medium text-text-primary">
+                          {config.label}
+                        </span>
+                        <span className="ml-2 text-sm text-text-muted">({count})</span>
+                        {orphanInfo.count > 0 && (
+                          <span className="ml-2 text-xs text-rag-amber">
+                            ({orphanInfo.count} children)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleClearEntityType(config)}
+                      variant="secondary"
+                      size="sm"
+                      disabled={count === 0}
+                      icon={<Trash2 className="w-3 h-3" />}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {/* Orphan Cleanup */}
+              {getOrphanedRecords.length > 0 && (
+                <div className="mt-4 p-4 bg-rag-amber/10 border border-rag-amber/30 rounded-lg">
+                  <div className="flex items-start gap-2 mb-3">
+                    <AlertTriangle className="w-4 h-4 text-rag-amber mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">
+                        Orphaned Records Detected
+                      </p>
+                      <p className="text-xs text-text-muted mt-1">
+                        These items have invalid parent references:
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="text-sm text-text-secondary mb-3 ml-6">
+                    {getOrphanedRecords.map((o) => (
+                      <li key={o.key}>
+                        {o.count} {o.label}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    onClick={handleCleanupOrphans}
+                    variant="secondary"
+                    size="sm"
+                    icon={<Trash2 className="w-3 h-3" />}
+                  >
+                    Clean Up Orphans
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 p-3 bg-accent-blue/10 rounded-lg">
@@ -255,18 +544,22 @@ export const SettingsPage: React.FC = () => {
             <div>
               <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rag-red" />
-                Clear All Data
+                Delete All Data
               </h3>
               <p className="text-xs text-text-muted mt-1">
-                Permanently delete all data. This cannot be undone.
+                Permanently delete everything including sample data. Start fresh.
+              </p>
+              <p className="text-xs text-text-muted">
+                Use "Reset to Demo Data" above to restore sample data afterward.
               </p>
             </div>
             <Button
               onClick={handleClearData}
               variant="danger"
               size="sm"
+              icon={<Trash2 className="w-4 h-4" />}
             >
-              Clear
+              Delete All
             </Button>
           </div>
         </div>
