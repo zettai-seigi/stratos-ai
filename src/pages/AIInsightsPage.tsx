@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useAI } from '../context/AIContext';
-import { RAGBadge, Button } from '../components/shared';
+import { Button } from '../components/shared';
+import type { RuleBasedInsight } from '../utils/insightsEngine';
 import {
   Sparkles,
   AlertTriangle,
@@ -10,7 +11,6 @@ import {
   TrendingDown,
   Lightbulb,
   Target,
-  Clock,
   DollarSign,
   Users,
   Zap,
@@ -19,7 +19,9 @@ import {
   ArrowRight,
   RefreshCw,
   Loader2,
-  Settings
+  Settings,
+  BarChart3,
+  ShieldCheck
 } from 'lucide-react';
 
 interface InsightCardProps {
@@ -84,130 +86,82 @@ const InsightCard: React.FC<InsightCardProps> = ({ type, title, description, act
   );
 };
 
+/**
+ * Convert severity to card type for styling
+ */
+const severityToType = (severity: RuleBasedInsight['severity']): InsightCardProps['type'] => {
+  switch (severity) {
+    case 'critical': return 'critical';
+    case 'warning': return 'warning';
+    case 'success': return 'success';
+    case 'info':
+    default: return 'info';
+  }
+};
+
+/**
+ * Get navigation link based on insight category
+ */
+const getCategoryLink = (category: RuleBasedInsight['category']): string => {
+  switch (category) {
+    case 'schedule':
+    case 'scope': return '/execution';
+    case 'cost': return '/portfolio';
+    case 'resource': return '/resources';
+    case 'strategic':
+    case 'quality': return '/strategy';
+    case 'trend':
+    default: return '/insights';
+  }
+};
+
+/**
+ * Get action text based on category
+ */
+const getCategoryAction = (category: RuleBasedInsight['category']): string => {
+  switch (category) {
+    case 'schedule':
+    case 'scope': return 'View Execution';
+    case 'cost': return 'View Portfolio';
+    case 'resource': return 'View Resources';
+    case 'strategic':
+    case 'quality': return 'View Strategy';
+    case 'trend':
+    default: return 'View Details';
+  }
+};
+
 export const AIInsightsPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useApp();
   const { pillars, initiatives, projects, tasks } = state;
-  const { isConfigured, isLoading, analysis, refreshAnalysis, lastUpdated, error } = useAI();
+  const {
+    isConfigured,
+    isLoading,
+    analysis,
+    refreshAnalysis,
+    lastUpdated,
+    error,
+    ruleBasedInsights,
+    ruleBasedSummary,
+  } = useAI();
   const insightsSectionRef = useRef<HTMLDivElement>(null);
 
-  // Use AI analysis if available, otherwise generate fallback insights
-  const generateInsights = (): InsightCardProps[] => {
-    // If we have AI analysis, convert it to InsightCardProps format
-    if (analysis && analysis.insights && analysis.insights.length > 0) {
-      return analysis.insights.map(insight => ({
-        type: insight.type,
-        title: insight.title,
-        description: insight.description,
-        action: insight.suggestedAction,
-        link: insight.link,
-      }));
-    }
-
-    // Fallback to generated insights
-    const insights: InsightCardProps[] = [];
-
-    // Check for critical pillars
-    const criticalPillars = pillars.filter(p => p.ragStatus === 'red');
-    criticalPillars.forEach(pillar => {
-      insights.push({
-        type: 'critical',
-        title: `${pillar.name} requires immediate attention`,
-        description: `This strategic pillar is marked as critical. Review linked initiatives and KPIs to identify root causes.`,
-        action: 'View Strategy Hub',
-        link: '/strategy',
-      });
-    });
-
-    // Check for at-risk initiatives
-    const atRiskInitiatives = initiatives.filter(i => i.ragStatus === 'red' || i.ragStatus === 'amber');
-    if (atRiskInitiatives.length > 0) {
-      insights.push({
-        type: 'warning',
-        title: `${atRiskInitiatives.length} initiative(s) at risk`,
-        description: `These initiatives may impact strategic goals: ${atRiskInitiatives.slice(0, 2).map(i => i.name).join(', ')}${atRiskInitiatives.length > 2 ? ` and ${atRiskInitiatives.length - 2} more` : ''}.`,
-        action: 'View Portfolio',
-        link: '/portfolio',
-      });
-    }
-
-    // Check for budget overruns
-    const overBudgetInitiatives = initiatives.filter(i => i.spentBudget > i.budget * 0.9);
-    if (overBudgetInitiatives.length > 0) {
-      insights.push({
-        type: 'warning',
-        title: 'Budget threshold alert',
-        description: `${overBudgetInitiatives.length} initiative(s) have consumed over 90% of allocated budget. Consider reallocation or scope adjustment.`,
-        action: 'Review Budgets',
-        link: '/portfolio',
-      });
-    }
-
-    // Check for blocked tasks
-    const blockedTasks = tasks.filter(t => t.kanbanStatus === 'blocked');
-    if (blockedTasks.length > 0) {
-      insights.push({
-        type: 'warning',
-        title: `${blockedTasks.length} blocked task(s) detected`,
-        description: 'Blocked tasks can cascade delays across projects. Prioritize unblocking these items.',
-        action: 'View Execution Board',
-        link: '/execution',
-      });
-    }
-
-    // Check for overdue tasks
-    const today = new Date();
-    const overdueTasks = tasks.filter(t =>
-      t.kanbanStatus !== 'done' && new Date(t.dueDate) < today
-    );
-    if (overdueTasks.length > 0) {
-      insights.push({
-        type: 'critical',
-        title: `${overdueTasks.length} overdue task(s)`,
-        description: 'These tasks are past their due date and may be impacting project timelines.',
-        action: 'View Tasks',
-        link: '/execution',
-      });
-    }
-
-    // Positive insights
-    const onTrackPillars = pillars.filter(p => p.ragStatus === 'green');
-    if (onTrackPillars.length > 0) {
-      insights.push({
-        type: 'success',
-        title: `${onTrackPillars.length} pillar(s) performing well`,
-        description: `${onTrackPillars.map(p => p.name).join(', ')} ${onTrackPillars.length === 1 ? 'is' : 'are'} on track to meet strategic targets.`,
-      });
-    }
-
-    // Check for high completion projects
-    const highCompletionProjects = projects.filter(p => p.completionPercentage >= 80 && p.status === 'in_progress');
-    if (highCompletionProjects.length > 0) {
-      insights.push({
-        type: 'success',
-        title: `${highCompletionProjects.length} project(s) nearing completion`,
-        description: `Projects at 80%+ completion: ${highCompletionProjects.map(p => p.name).join(', ')}.`,
-        action: 'View Projects',
-        link: '/execution',
-      });
-    }
-
-    // Recommendations
-    insights.push({
-      type: 'info',
-      title: 'Recommendation: Resource optimization',
-      description: 'Based on current workload distribution, consider reallocating resources from completed projects to at-risk initiatives.',
-      action: 'View Resources',
-      link: '/resources',
-    });
-
-    return insights;
-  };
-
-  const insights = generateInsights();
+  // Convert rule-based insights to card format
+  // Rule-based insights are always available, AI analysis enhances them
+  const insights: InsightCardProps[] = ruleBasedInsights.map(insight => ({
+    type: severityToType(insight.severity),
+    title: insight.title,
+    description: insight.description,
+    action: insight.suggestedAction ? getCategoryAction(insight.category) : undefined,
+    link: insight.suggestedAction ? getCategoryLink(insight.category) : undefined,
+  }));
   const criticalCount = insights.filter(i => i.type === 'critical').length;
   const warningCount = insights.filter(i => i.type === 'warning').length;
   const successCount = insights.filter(i => i.type === 'success').length;
+
+  // Check if there's any data to analyze
+  const hasData = pillars.length > 0 || initiatives.length > 0 || projects.length > 0 || tasks.length > 0;
 
   // Generate trend analysis
   const trendData = [
@@ -242,11 +196,11 @@ export const AIInsightsPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">AI Insights Center</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Insights Center</h1>
           <p className="text-text-secondary mt-1">
             {isConfigured
-              ? `AI-powered analysis ${lastUpdated ? `- Last updated: ${new Date(lastUpdated).toLocaleString()}` : ''}`
-              : 'Configure Claude API in Settings to enable AI-powered analysis'}
+              ? `Rule-based analysis + AI enhancement ${lastUpdated ? `- AI updated: ${new Date(lastUpdated).toLocaleString()}` : ''}`
+              : 'Rule-based analysis active. Configure Claude API for AI-enhanced insights.'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -258,7 +212,7 @@ export const AIInsightsPage: React.FC = () => {
               disabled={isLoading}
               icon={isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             >
-              {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
+              {isLoading ? 'Analyzing...' : 'Refresh AI'}
             </Button>
           ) : (
             <Button
@@ -267,18 +221,23 @@ export const AIInsightsPage: React.FC = () => {
               size="sm"
               icon={<Settings className="w-4 h-4" />}
             >
-              Configure API
+              Enable AI
             </Button>
           )}
           <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 text-accent-purple animate-spin" />
-            ) : (
-              <Sparkles className="w-5 h-5 text-accent-purple" />
+            <BarChart3 className="w-5 h-5 text-accent-cyan" />
+            <span className="text-sm text-text-secondary">Rules</span>
+            {isConfigured && (
+              <>
+                <span className="text-text-muted">+</span>
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 text-accent-purple animate-spin" />
+                ) : (
+                  <Sparkles className="w-5 h-5 text-accent-purple" />
+                )}
+                <span className="text-sm text-text-secondary">AI</span>
+              </>
             )}
-            <span className="text-sm text-text-secondary">
-              {isConfigured ? 'Claude AI' : 'AI Powered'}
-            </span>
           </div>
         </div>
       </div>
@@ -296,56 +255,104 @@ export const AIInsightsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Executive Summary from AI */}
-      {analysis && (
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-accent-purple/20 rounded-lg">
-              <Sparkles className="w-5 h-5 text-accent-purple" />
+      {/* No Data Message */}
+      {!hasData && (
+        <div className="bg-bg-card rounded-xl border border-border p-8 text-center">
+          <div className="max-w-md mx-auto">
+            <div className="w-16 h-16 mx-auto mb-4 bg-accent-blue/10 rounded-full flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-accent-blue" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-accent-purple mb-2">AI Executive Summary</h3>
-              <p className="text-text-primary mb-4">{analysis.executiveSummary.summary}</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <h4 className="text-xs font-semibold text-rag-red mb-2">Key Risks</h4>
-                  <ul className="space-y-1">
-                    {analysis.executiveSummary.keyRisks.slice(0, 3).map((risk, idx) => (
-                      <li key={idx} className="text-sm text-text-secondary flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rag-red mt-1.5 flex-shrink-0" />
-                        {risk}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-rag-green mb-2">Opportunities</h4>
-                  <ul className="space-y-1">
-                    {analysis.executiveSummary.opportunities.slice(0, 3).map((opp, idx) => (
-                      <li key={idx} className="text-sm text-text-secondary flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rag-green mt-1.5 flex-shrink-0" />
-                        {opp}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-accent-blue mb-2">Recommendations</h4>
-                  <ul className="space-y-1">
-                    {analysis.executiveSummary.recommendations.slice(0, 3).map((rec, idx) => (
-                      <li key={idx} className="text-sm text-text-secondary flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent-blue mt-1.5 flex-shrink-0" />
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+            <h2 className="text-xl font-semibold text-text-primary mb-2">No Data to Analyze</h2>
+            <p className="text-text-secondary mb-6">
+              AI Insights will appear here once you have data in your system. Start by importing data or creating your first Strategy Pillar.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => navigate('/import')}
+                icon={<Zap className="w-4 h-4" />}
+              >
+                Import Data
+              </Button>
+              <Button
+                onClick={() => navigate('/settings')}
+                variant="secondary"
+                icon={<RefreshCw className="w-4 h-4" />}
+              >
+                Load Demo Data
+              </Button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Content only shown when there's data */}
+      {hasData && (
+        <>
+      {/* Executive Summary - Always show rule-based, enhance with AI if available */}
+      <div className="bg-bg-card rounded-xl border border-border p-5">
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${analysis ? 'bg-accent-purple/20' : 'bg-accent-cyan/20'}`}>
+            {analysis ? (
+              <Sparkles className="w-5 h-5 text-accent-purple" />
+            ) : (
+              <ShieldCheck className="w-5 h-5 text-accent-cyan" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className={`text-sm font-semibold mb-2 ${analysis ? 'text-accent-purple' : 'text-accent-cyan'}`}>
+              {analysis ? 'AI Executive Summary' : 'Executive Summary'}
+            </h3>
+            <p className="text-text-primary mb-4">
+              {analysis?.executiveSummary.summary || ruleBasedSummary.summary}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <h4 className="text-xs font-semibold text-rag-red mb-2">Key Risks</h4>
+                <ul className="space-y-1">
+                  {(analysis?.executiveSummary.keyRisks || ruleBasedSummary.keyRisks).slice(0, 3).map((risk, idx) => (
+                    <li key={idx} className="text-sm text-text-secondary flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rag-red mt-1.5 flex-shrink-0" />
+                      {risk}
+                    </li>
+                  ))}
+                  {(analysis?.executiveSummary.keyRisks || ruleBasedSummary.keyRisks).length === 0 && (
+                    <li className="text-sm text-text-muted">No critical risks identified</li>
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-rag-green mb-2">Opportunities</h4>
+                <ul className="space-y-1">
+                  {(analysis?.executiveSummary.opportunities || ruleBasedSummary.opportunities).slice(0, 3).map((opp, idx) => (
+                    <li key={idx} className="text-sm text-text-secondary flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rag-green mt-1.5 flex-shrink-0" />
+                      {opp}
+                    </li>
+                  ))}
+                  {(analysis?.executiveSummary.opportunities || ruleBasedSummary.opportunities).length === 0 && (
+                    <li className="text-sm text-text-muted">Continue monitoring performance</li>
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-accent-blue mb-2">Recommendations</h4>
+                <ul className="space-y-1">
+                  {(analysis?.executiveSummary.recommendations || ruleBasedSummary.recommendations).slice(0, 3).map((rec, idx) => (
+                    <li key={idx} className="text-sm text-text-secondary flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-blue mt-1.5 flex-shrink-0" />
+                      {rec}
+                    </li>
+                  ))}
+                  {(analysis?.executiveSummary.recommendations || ruleBasedSummary.recommendations).length === 0 && (
+                    <li className="text-sm text-text-muted">No immediate actions required</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -469,12 +476,22 @@ export const AIInsightsPage: React.FC = () => {
       <div ref={insightsSectionRef}>
         <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-rag-amber" />
-          AI-Generated Insights
+          Rule-Based Insights
+          <span className="text-xs text-text-muted font-normal ml-2">
+            {ruleBasedInsights.length} insights from {new Set(ruleBasedInsights.map(i => i.category)).size} categories
+          </span>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {insights.map((insight, index) => (
-            <InsightCard key={index} {...insight} />
-          ))}
+          {insights.length > 0 ? (
+            insights.map((insight, index) => (
+              <InsightCard key={index} {...insight} />
+            ))
+          ) : (
+            <div className="col-span-2 bg-bg-secondary rounded-xl p-6 text-center">
+              <CheckCircle className="w-8 h-8 text-rag-green mx-auto mb-2" />
+              <p className="text-text-secondary">All metrics within healthy thresholds</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -514,6 +531,8 @@ export const AIInsightsPage: React.FC = () => {
           </Link>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

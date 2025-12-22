@@ -1,7 +1,9 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronRight, Search, Bell, Sparkles } from 'lucide-react';
+import { ChevronRight, Search, Bell, Sparkles, Building2, ChevronDown } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
+import { useOrgContext } from '../../context/OrgContext';
+import { useApp } from '../../context/AppContext';
 
 interface HeaderProps {
   visible: boolean;
@@ -27,6 +29,28 @@ const routeLabels: Record<string, string> = {
 export const Header: React.FC<HeaderProps> = ({ visible }) => {
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
+  const { selectedOrgUnitId, setSelectedOrgUnitId } = useOrgContext();
+  const { getOrgUnit, getChildOrgUnits, getOrgConfig, state } = useApp();
+  const [orgDropdownOpen, setOrgDropdownOpen] = React.useState(false);
+  const orgDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  const config = getOrgConfig();
+  const orgUnits = state.orgUnits || [];
+  const selectedUnit = selectedOrgUnitId ? getOrgUnit(selectedOrgUnitId) : null;
+  // Get root corporation or first company for display
+  const corporateEntities = state.corporateEntities || [];
+  const rootEntity = corporateEntities.find((e) => e.entityType === 'corporation' && !e.parentEntityId);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (orgDropdownRef.current && !orgDropdownRef.current.contains(event.target as Node)) {
+        setOrgDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Build breadcrumbs
   const breadcrumbs: BreadcrumbItem[] = [
@@ -40,14 +64,80 @@ export const Header: React.FC<HeaderProps> = ({ visible }) => {
     breadcrumbs.push({ label, path: currentPath });
   });
 
+  // Get top-level org units (directorates without parent)
+  const topLevelOrgUnits = orgUnits.filter((u) => !u.parentId && u.isActive);
+
+  // Recursive org tree renderer for dropdown
+  const renderOrgTree = (unit: typeof orgUnits[0], depth: number = 0): React.ReactNode => {
+    if (!unit) return null;
+    const children = getChildOrgUnits(unit.id);
+    return (
+      <React.Fragment key={unit.id}>
+        <button
+          onClick={() => {
+            setSelectedOrgUnitId(unit.id);
+            setOrgDropdownOpen(false);
+          }}
+          className={`w-full text-left px-2 py-1 text-xs hover:bg-[var(--cds-background-hover)] ${
+            selectedOrgUnitId === unit.id ? 'bg-[var(--cds-background-active)] text-[var(--cds-link-primary)]' : ''
+          }`}
+          style={{ paddingLeft: `${depth * 12 + 8}px` }}
+        >
+          {unit.name}
+        </button>
+        {children.map((child) => renderOrgTree(child, depth + 1))}
+      </React.Fragment>
+    );
+  };
+
   return (
     <header
       className={`h-8 bg-[var(--cds-layer-01)] border-b border-[var(--cds-border-subtle-00)] px-3 flex items-center justify-between transition-all duration-200 ${
         visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 absolute'
       }`}
     >
-      {/* Breadcrumbs - Carbon style */}
-      <nav className="flex items-center gap-1 text-xs">
+      {/* Left side: Org Selector + Breadcrumbs */}
+      <div className="flex items-center gap-3">
+        {/* Org Selector - Compact */}
+        {orgUnits.length > 0 && (
+          <div className="relative" ref={orgDropdownRef}>
+            <button
+              onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+              className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-[var(--cds-text-secondary)] hover:bg-[var(--cds-background-hover)] transition-colors"
+            >
+              <Building2 className="w-3 h-3" />
+              <span className="max-w-[120px] truncate">
+                {selectedUnit ? selectedUnit.name : 'All Org'}
+              </span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {orgDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-[var(--cds-layer-01)] border border-[var(--cds-border-subtle-00)] rounded shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
+                <button
+                  onClick={() => {
+                    setSelectedOrgUnitId(null);
+                    setOrgDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-2 py-1 text-xs hover:bg-[var(--cds-background-hover)] ${
+                    !selectedOrgUnitId ? 'bg-[var(--cds-background-active)] text-[var(--cds-link-primary)]' : ''
+                  }`}
+                >
+                  All Organizations
+                </button>
+                <div className="border-t border-[var(--cds-border-subtle-00)] my-1" />
+                {topLevelOrgUnits.map((unit) => renderOrgTree(unit))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Divider */}
+        {orgUnits.length > 0 && (
+          <div className="h-4 w-px bg-[var(--cds-border-subtle-00)]" />
+        )}
+
+        {/* Breadcrumbs - Carbon style */}
+        <nav className="flex items-center gap-1 text-xs">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={crumb.path}>
             {index > 0 && (
@@ -65,7 +155,8 @@ export const Header: React.FC<HeaderProps> = ({ visible }) => {
             )}
           </React.Fragment>
         ))}
-      </nav>
+        </nav>
+      </div>
 
       {/* Right side actions */}
       <div className="flex items-center gap-0.5">

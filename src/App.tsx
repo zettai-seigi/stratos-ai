@@ -2,6 +2,10 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AIProvider } from './context/AIContext';
+import { ConfigProvider } from './context/ConfigContext';
+import { OrgProvider } from './context/OrgContext';
+import { CorporateProvider } from './context/CorporateContext';
+import { AuthProvider } from './context/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { StrategicCommandCenter } from './components/dashboard/StrategicCommandCenter';
 import { PortfolioHub } from './components/dashboard/PortfolioHub';
@@ -14,33 +18,44 @@ import { ResourcesPage } from './pages/ResourcesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { HelpPage } from './pages/HelpPage';
 import { ProjectCharterPage } from './pages/ProjectCharterPage';
+import { SetupWizardPage } from './pages/SetupWizardPage';
 import './index.css';
 
 function App() {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <AIProvider>
-        <HashRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<StrategicCommandCenter />} />
-            <Route path="strategy" element={<StrategyHubPage />} />
-            <Route path="portfolio" element={<PortfolioHub />} />
-            <Route path="execution" element={<OperationalDashboard />} />
-            <Route path="execution/:projectId" element={<OperationalDashboard />} />
-            <Route path="project/:projectId" element={<ProjectCharterPage />} />
-            <Route path="insights" element={<AIInsightsPage />} />
-            <Route path="export" element={<ExportPage />} />
-            <Route path="import" element={<ImportPage />} />
-            <Route path="resources" element={<ResourcesPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="help" element={<HelpPage />} />
-          </Route>
-        </Routes>
-        </HashRouter>
-        </AIProvider>
-      </AppProvider>
+      <ConfigProvider>
+        <AppProvider>
+          <CorporateProvider>
+            <OrgProvider>
+              <AuthProvider>
+                <AIProvider>
+                  <HashRouter>
+                    <Routes>
+                      <Route path="/" element={<Layout />}>
+                        <Route index element={<StrategicCommandCenter />} />
+                        <Route path="strategy" element={<StrategyHubPage />} />
+                        <Route path="portfolio" element={<PortfolioHub />} />
+                        <Route path="execution" element={<OperationalDashboard />} />
+                        <Route path="execution/:projectId" element={<OperationalDashboard />} />
+                        <Route path="project/:projectId" element={<ProjectCharterPage />} />
+                        <Route path="insights" element={<AIInsightsPage />} />
+                        <Route path="export" element={<ExportPage />} />
+                        <Route path="import" element={<ImportPage />} />
+                        <Route path="resources" element={<ResourcesPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="help" element={<HelpPage />} />
+                      </Route>
+                      {/* Setup Wizard - outside Layout */}
+                      <Route path="setup-wizard" element={<SetupWizardPage />} />
+                    </Routes>
+                  </HashRouter>
+                </AIProvider>
+              </AuthProvider>
+            </OrgProvider>
+          </CorporateProvider>
+        </AppProvider>
+      </ConfigProvider>
     </ThemeProvider>
   );
 }

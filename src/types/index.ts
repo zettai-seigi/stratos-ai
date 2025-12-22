@@ -1,4 +1,78 @@
 // =============================================================================
+// RE-EXPORT CORPORATE TYPES (Tier 1 - Legal Structure)
+// =============================================================================
+
+import type { CorporateEntity, CorporateHierarchyConfig } from './corporate';
+export type {
+  CorporateEntityType,
+  BSCScope,
+  CorporateEntity,
+  CorporateHierarchyConfig,
+  CorporateEntityMetrics,
+} from './corporate';
+export {
+  DEFAULT_CORPORATE_CONFIG,
+  DEFAULT_CORPORATION,
+  DEFAULT_COMPANY,
+  getSiblingEntities,
+  getAncestorEntities,
+  getDescendantEntities,
+  getChildEntities,
+  getRootCorporation,
+  getAllCompanies,
+  findCompanyAncestor,
+  validateCorporateHierarchy,
+  createCorporateEntity,
+} from './corporate';
+
+// =============================================================================
+// RE-EXPORT ORGANIZATION TYPES (Tier 2 - Org Structure)
+// =============================================================================
+
+import type { OrgUnit, OrgHierarchyConfig } from './organization';
+export type { OrgLevel, OrgUnit, OrgHierarchyConfig, OrgUnitMetrics } from './organization';
+export {
+  LEVELS_WITHOUT_BSC,
+  ORG_LEVEL_ORDER,
+  DEFAULT_ORG_CONFIG,
+  getChildLevel,
+  getParentLevel,
+  levelCanHaveBSC,
+  getLevelsWithBSC,
+  createOrgUnit,
+  getChildOrgUnits,
+  getDescendantOrgUnits,
+  getAncestorOrgUnits,
+  getOrgUnitsForCompany,
+  getTopLevelOrgUnits,
+  validateOrgHierarchy,
+} from './organization';
+
+// =============================================================================
+// RE-EXPORT RBAC TYPES (Role-Based Access Control)
+// =============================================================================
+
+import type { User, UserEntityAssignment } from './rbac';
+export type {
+  UserRole,
+  Permissions,
+  User,
+  UserEntityAssignment,
+  RoleInfo,
+} from './rbac';
+export {
+  DEFAULT_PERMISSIONS,
+  ROLE_INFO,
+  DEFAULT_ADMIN_USER,
+  DEFAULT_ADMIN_ASSIGNMENT,
+  getEffectiveRole,
+  getPermissionsForRole,
+  canPerformAction,
+  createUserAssignment,
+  createUser,
+} from './rbac';
+
+// =============================================================================
 // ENUMS & LITERAL TYPES
 // =============================================================================
 
@@ -16,6 +90,12 @@ export type MilestoneStatus = 'pending' | 'completed' | 'missed';
 
 /** Task priority levels */
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
+
+/** Priority band for initiatives (P1 = highest) */
+export type PriorityBand = 'P1' | 'P2' | 'P3' | 'P4' | 'P5';
+
+/** Risk category types aligned with PPM best practices */
+export type RiskCategory = 'technical' | 'delivery' | 'business' | 'organizational' | 'external';
 
 /** Department/Function codes for Work ID generation */
 export type DepartmentCode =
@@ -105,6 +185,8 @@ export interface StrategyPillar {
   description: string;
   displayOrder: number;
   ragStatus: RAGStatus;
+  /** Organization unit that owns this pillar (undefined = company level) */
+  orgUnitId?: string;
 }
 
 /** Strategic KPI - Metrics for each pillar */
@@ -117,6 +199,15 @@ export interface StrategicKPI {
   previousValue: number;
   unit: KPIUnit;
   lastUpdated: string; // ISO date string
+}
+
+/** Risk scores by category (0-100 scale) */
+export interface RiskScores {
+  technical: number;    // Technology complexity, integration risk
+  delivery: number;     // Schedule, resource, scope risks
+  business: number;     // Market, financial, strategic risks
+  organizational: number; // Change management, stakeholder risks
+  external: number;     // Regulatory, vendor, market risks
 }
 
 /** Initiative - Programs/portfolios linked to a pillar */
@@ -133,6 +224,22 @@ export interface Initiative {
   ragStatus: RAGStatus;
   /** Optional: Link to specific KPIs this initiative impacts */
   linkedKpiIds?: string[];
+  /** Organization unit that owns this initiative (undefined = company level) */
+  orgUnitId?: string;
+
+  // ========== PPM METRICS (Optional for backward compatibility) ==========
+  /** Priority band (P1 = highest priority) */
+  priorityBand?: PriorityBand;
+  /** Priority score (0-100, calculated from weighted criteria) */
+  priorityScore?: number;
+  /** Strategic alignment score (0-5 scale) */
+  strategicAlignmentScore?: number;
+  /** Risk scores by category */
+  riskScores?: RiskScores;
+  /** Schedule Performance Index (EV/PV) - 1.0 = on schedule */
+  spiOverride?: number;
+  /** Cost Performance Index (EV/AC) - 1.0 = on budget */
+  cpiOverride?: number;
 }
 
 /** Project - Execution vehicles linked to an initiative */
@@ -156,6 +263,223 @@ export interface Project {
   fiscalYear: number;
   /** Generated Work ID (e.g., "OPS-25-GROW-012") */
   workId: string;
+  /** Organization unit that owns this project (undefined = inherits from initiative) */
+  orgUnitId?: string;
+
+  // ========== EVM METRICS (Optional for backward compatibility) ==========
+  /** Planned Value (BCWS) - Budgeted cost of work scheduled */
+  plannedValue?: number;
+  /** Earned Value (BCWP) - Budgeted cost of work performed */
+  earnedValue?: number;
+  /** Actual Cost (ACWP) - Actual cost of work performed */
+  actualCost?: number;
+  /** Number of scope change requests */
+  scopeChangeCount?: number;
+  /** Risk exposure score (0-100) */
+  riskExposure?: number;
+  /** Original baseline end date (for variance tracking) */
+  baselineEndDate?: string;
+
+  // ========== PROJECT CHARTER DOCUMENTATION ==========
+  /** Project charter with comprehensive documentation */
+  charter?: ProjectCharterDoc;
+}
+
+// =============================================================================
+// PROJECT CHARTER DOCUMENTATION TYPES
+// =============================================================================
+
+/** Process diagram documentation */
+export interface ProcessDiagram {
+  /** Description of current state process */
+  asIsDescription?: string;
+  /** Link/reference to as-is diagram */
+  asIsDiagramUrl?: string;
+  /** Description of future state process */
+  toBeDescription?: string;
+  /** Link/reference to to-be diagram */
+  toBeDiagramUrl?: string;
+  /** Key process changes/improvements */
+  keyChanges?: string[];
+}
+
+/** Cost benefit item */
+export interface CostBenefit {
+  id: string;
+  description: string;
+  /** Tangible (measurable/direct) or Intangible (non-measurable/indirect) */
+  type: 'tangible' | 'intangible';
+  /** Quantified value if tangible */
+  estimatedValue?: number;
+  /** Unit of measurement (e.g., "$", "hours", "FTE") */
+  unit?: string;
+  /** Timeframe to realize benefit (e.g., "Year 1", "Ongoing") */
+  realizationTimeframe?: string;
+  /** How this benefit will be measured */
+  measurementMethod?: string;
+}
+
+/** Control definition */
+export interface ProjectControl {
+  id: string;
+  name: string;
+  description: string;
+  /** Type of control */
+  type: 'preventive' | 'detective' | 'corrective';
+  /** Who is responsible for this control */
+  owner?: string;
+  /** Frequency of control execution */
+  frequency?: 'continuous' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'as_needed';
+}
+
+/** Project goal */
+export interface ProjectGoal {
+  id: string;
+  statement: string;
+  /** SMART criteria compliance */
+  isSpecific: boolean;
+  isMeasurable: boolean;
+  isAchievable: boolean;
+  isRelevant: boolean;
+  isTimeBound: boolean;
+  /** Target date for goal achievement */
+  targetDate?: string;
+  /** Success criteria */
+  successCriteria?: string[];
+}
+
+/** Project metric */
+export interface ProjectMetric {
+  id: string;
+  name: string;
+  description: string;
+  /** Current baseline value */
+  baselineValue?: number;
+  /** Target value */
+  targetValue: number;
+  /** Unit of measurement */
+  unit: string;
+  /** How often this is measured */
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'milestone';
+  /** Data source for this metric */
+  dataSource?: string;
+}
+
+/** Policy reference */
+export interface PolicyReference {
+  id: string;
+  name: string;
+  description: string;
+  /** Policy document reference/link */
+  documentRef?: string;
+  /** How this policy applies to the project */
+  applicability?: string;
+  /** Compliance requirements */
+  complianceRequirements?: string[];
+}
+
+/** Team member role definition */
+export interface TeamRole {
+  id: string;
+  roleName: string;
+  responsibilities: string[];
+  /** Resource assigned to this role (if assigned) */
+  assignedResourceId?: string;
+  /** Required skills for this role */
+  requiredSkills?: string[];
+  /** Time commitment (e.g., "Full-time", "50%", "As needed") */
+  commitment?: string;
+  /** Is this role for project phase or operations handover */
+  phase: 'project' | 'operations' | 'both';
+}
+
+/** Scope item */
+export interface ScopeItem {
+  id: string;
+  description: string;
+  /** In scope or out of scope */
+  inclusion: 'in_scope' | 'out_of_scope';
+  /** Category for grouping */
+  category?: string;
+  /** Rationale for inclusion/exclusion */
+  rationale?: string;
+}
+
+/** Data specification */
+export interface DataSpecification {
+  id: string;
+  name: string;
+  description: string;
+  /** Data type (e.g., "Customer data", "Transaction data") */
+  dataType: string;
+  /** Source system */
+  source?: string;
+  /** Target system */
+  target?: string;
+  /** Data format */
+  format?: string;
+  /** Volume estimate */
+  volumeEstimate?: string;
+  /** Data quality requirements */
+  qualityRequirements?: string[];
+  /** Privacy/security classification */
+  classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+  /** Retention requirements */
+  retentionPeriod?: string;
+}
+
+/** Complete project charter documentation */
+export interface ProjectCharterDoc {
+  /** Version tracking */
+  version: string;
+  lastUpdated: string;
+  approvedBy?: string;
+  approvedDate?: string;
+
+  /** Process diagrams (as-is and to-be) */
+  processDiagrams?: ProcessDiagram;
+
+  /** Cost benefits analysis */
+  costBenefits?: {
+    tangible: CostBenefit[];
+    intangible: CostBenefit[];
+    totalTangibleValue?: number;
+    paybackPeriod?: string;
+    roi?: number;
+  };
+
+  /** Controls */
+  controls?: ProjectControl[];
+
+  /** Goals (SMART objectives) */
+  goals?: ProjectGoal[];
+
+  /** Metrics/KPIs for project success */
+  metrics?: ProjectMetric[];
+
+  /** Applicable policies */
+  policies?: PolicyReference[];
+
+  /** Project team roles */
+  projectTeam?: TeamRole[];
+
+  /** Operations handover team */
+  operationsTeam?: TeamRole[];
+
+  /** Scope definition */
+  scope?: {
+    inScope: ScopeItem[];
+    outOfScope: ScopeItem[];
+    assumptions?: string[];
+    constraints?: string[];
+    dependencies?: string[];
+  };
+
+  /** Data specifications */
+  dataSpecifications?: DataSpecification[];
+
+  /** Charter completeness score (auto-calculated) */
+  completenessScore?: number;
 }
 
 /** Task - Granular work items linked to a project */
@@ -223,6 +547,18 @@ export interface Resource {
   departmentCode: DepartmentCode;
   /** Hourly cost rate for budget calculations */
   hourlyRate?: number;
+  /** Organization unit this resource belongs to (undefined = company level) */
+  orgUnitId?: string;
+
+  // ========== UTILIZATION TRACKING (Optional) ==========
+  /** Skills/competencies */
+  skills?: string[];
+  /** Target utilization percentage (e.g., 80%) */
+  targetUtilization?: number;
+  /** Is this a key/critical resource? */
+  isKeyResource?: boolean;
+  /** Resource availability status */
+  availabilityStatus?: 'available' | 'partial' | 'unavailable';
 }
 
 // =============================================================================
@@ -272,6 +608,30 @@ export interface AppState {
   functionContributions?: FunctionContribution[];
   /** Project milestones for WBS tracking */
   milestones?: Milestone[];
+
+  // ========== CORPORATE STRUCTURE (Tier 1) ==========
+  /** Corporate entities (Corporation → Holdings → Companies) */
+  corporateEntities?: CorporateEntity[];
+  /** Corporate hierarchy configuration */
+  corporateConfig?: CorporateHierarchyConfig;
+
+  // ========== ORGANIZATION STRUCTURE (Tier 2) ==========
+  /** Organization units for hierarchy (within companies) */
+  orgUnits?: OrgUnit[];
+  /** Organization hierarchy configuration */
+  orgConfig?: OrgHierarchyConfig;
+
+  // ========== RBAC (Role-Based Access Control) ==========
+  /** User profiles */
+  users?: User[];
+  /** User role assignments to entities/orgs */
+  userAssignments?: UserEntityAssignment[];
+  /** Current logged-in user ID */
+  currentUserId?: string;
+
+  // ========== SETUP WIZARD ==========
+  /** Whether the setup wizard has been completed */
+  setupWizardCompleted?: boolean;
 }
 
 /** Action types for reducer - strongly typed payloads */
@@ -301,7 +661,28 @@ export type AppAction =
   | { type: 'DELETE_FUNCTION_CONTRIBUTION'; payload: { projectId: string; departmentCode: DepartmentCode } }
   | { type: 'ADD_MILESTONE'; payload: Milestone }
   | { type: 'UPDATE_MILESTONE'; payload: Milestone }
-  | { type: 'DELETE_MILESTONE'; payload: string };
+  | { type: 'DELETE_MILESTONE'; payload: string }
+  // Organization hierarchy actions
+  | { type: 'ADD_ORG_UNIT'; payload: OrgUnit }
+  | { type: 'UPDATE_ORG_UNIT'; payload: OrgUnit }
+  | { type: 'DELETE_ORG_UNIT'; payload: string }
+  | { type: 'UPDATE_ORG_CONFIG'; payload: OrgHierarchyConfig }
+  // Corporate entity actions
+  | { type: 'ADD_CORPORATE_ENTITY'; payload: CorporateEntity }
+  | { type: 'UPDATE_CORPORATE_ENTITY'; payload: CorporateEntity }
+  | { type: 'DELETE_CORPORATE_ENTITY'; payload: string }
+  | { type: 'UPDATE_CORPORATE_CONFIG'; payload: CorporateHierarchyConfig }
+  // User management actions
+  | { type: 'ADD_USER'; payload: User }
+  | { type: 'UPDATE_USER'; payload: User }
+  | { type: 'DELETE_USER'; payload: string }
+  | { type: 'SET_CURRENT_USER'; payload: string | null }
+  // User assignment actions
+  | { type: 'ADD_USER_ASSIGNMENT'; payload: UserEntityAssignment }
+  | { type: 'UPDATE_USER_ASSIGNMENT'; payload: UserEntityAssignment }
+  | { type: 'DELETE_USER_ASSIGNMENT'; payload: string }
+  // Setup wizard actions
+  | { type: 'SET_SETUP_WIZARD_COMPLETED'; payload: boolean };
 
 // =============================================================================
 // NAVIGATION & VIEW TYPES
@@ -313,6 +694,187 @@ export type ViewType = 'strategic' | 'portfolio' | 'execution';
 // =============================================================================
 // DERIVED METRICS INTERFACES
 // =============================================================================
+
+// =============================================================================
+// STAGE-GATE APPROVAL FRAMEWORK TYPES
+// =============================================================================
+
+/** Project lifecycle stages (Stage-Gate model) */
+export type ProjectStage =
+  | 'idea'           // Initial concept
+  | 'business_case'  // Business justification
+  | 'planning'       // Detailed planning
+  | 'execution'      // Active development
+  | 'closure';       // Wrap-up and benefits realization
+
+/** Approval requirement status */
+export type RequirementStatus = 'not_started' | 'in_progress' | 'complete' | 'waived' | 'not_applicable';
+
+/** Requirement category for stage-gate approval */
+export type RequirementCategory =
+  | 'strategic'      // Strategic alignment, business case
+  | 'financial'      // Budget, ROI, funding
+  | 'technical'      // Technical feasibility, architecture
+  | 'resource'       // Team, skills, capacity
+  | 'risk'           // Risk assessment, mitigation
+  | 'governance'     // Approvals, compliance, stakeholders
+  | 'delivery';      // Schedule, milestones, quality
+
+/** Individual approval requirement */
+export interface ApprovalRequirement {
+  id: string;
+  category: RequirementCategory;
+  name: string;
+  description: string;
+  /** Is this requirement mandatory for gate approval? */
+  isMandatory: boolean;
+  /** Weight for scoring (0-100), only for non-mandatory items */
+  weight: number;
+  /** Current status */
+  status: RequirementStatus;
+  /** Evidence/notes for completion */
+  evidence?: string;
+  /** Who approved/waived this requirement */
+  approvedBy?: string;
+  approvedDate?: string;
+}
+
+/** Stage gate definition */
+export interface StageGate {
+  stage: ProjectStage;
+  name: string;
+  description: string;
+  /** Minimum score required to pass (percentage of weighted items) */
+  minimumScore: number;
+  /** Requirements for this gate */
+  requirements: ApprovalRequirement[];
+}
+
+/** Project approval status */
+export interface ProjectApprovalStatus {
+  projectId: string;
+  currentStage: ProjectStage;
+  /** Gate readiness scores by stage */
+  gateScores: Record<ProjectStage, {
+    mandatoryComplete: boolean;
+    weightedScore: number;
+    totalRequirements: number;
+    completedRequirements: number;
+    blockers: string[];
+  }>;
+  /** Overall approval recommendation */
+  recommendation: 'approve' | 'conditional' | 'defer' | 'reject';
+  /** Conditions for conditional approval */
+  conditions?: string[];
+}
+
+// =============================================================================
+// RULE-BASED INSIGHTS ENGINE TYPES
+// =============================================================================
+
+/** Insight severity levels */
+export type InsightSeverity = 'info' | 'success' | 'warning' | 'critical';
+
+/** Insight category for grouping */
+export type InsightCategory =
+  | 'schedule'       // Time-related insights
+  | 'cost'           // Budget-related insights
+  | 'scope'          // Delivery/completion insights
+  | 'resource'       // Team/capacity insights
+  | 'quality'        // Health/status insights
+  | 'strategic'      // Alignment insights
+  | 'trend';         // Pattern-based insights
+
+/** Rule-based insight */
+export interface RuleBasedInsight {
+  id: string;
+  category: InsightCategory;
+  severity: InsightSeverity;
+  title: string;
+  description: string;
+  /** The rule that triggered this insight */
+  ruleName: string;
+  /** Affected entities */
+  affectedEntities: {
+    type: 'pillar' | 'initiative' | 'project' | 'task' | 'resource';
+    id: string;
+    name: string;
+  }[];
+  /** Suggested action */
+  suggestedAction?: string;
+  /** Link to relevant page */
+  link?: string;
+  /** Metric values that triggered the insight */
+  metrics?: Record<string, number | string>;
+  /** When the insight was generated */
+  generatedAt: string;
+}
+
+/** Rule definition for insights engine */
+export interface InsightRule {
+  id: string;
+  name: string;
+  description: string;
+  category: InsightCategory;
+  severity: InsightSeverity;
+  /** Is this rule enabled? */
+  enabled: boolean;
+  /** Threshold or condition (serialized for storage) */
+  condition: string;
+  /** Template for generating insight title */
+  titleTemplate: string;
+  /** Template for generating insight description */
+  descriptionTemplate: string;
+  /** Template for suggested action */
+  actionTemplate?: string;
+}
+
+// =============================================================================
+// RISK SCORE CALCULATION TYPES
+// =============================================================================
+
+/** Individual risk factor with score contribution */
+export interface RiskFactor {
+  category: 'schedule' | 'cost' | 'scope' | 'resource' | 'quality' | 'status';
+  name: string;
+  description: string;
+  score: number;        // Contribution to total (0-100 scale contribution)
+  weight: number;       // Weight factor (0-1)
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  rawValue?: number | string;  // The actual measured value
+  threshold?: string;   // What triggered this factor
+}
+
+/** Comprehensive risk score breakdown */
+export interface RiskScoreBreakdown {
+  /** Overall risk score (0-100) */
+  totalScore: number;
+  /** Risk level classification */
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  /** Individual risk factors that contribute to the score */
+  factors: RiskFactor[];
+  /** Performance indices */
+  indices: {
+    /** Schedule Performance Index (1.0 = on schedule, <1 = behind) */
+    spi: number;
+    /** Cost Performance Index (1.0 = on budget, <1 = over) */
+    cpi: number;
+    /** Scope Performance (% complete vs % time elapsed) */
+    scopePerformance: number;
+    /** Resource utilization index */
+    resourceIndex: number;
+  };
+  /** Summary statistics */
+  summary: {
+    scheduleScore: number;
+    costScore: number;
+    scopeScore: number;
+    resourceScore: number;
+    qualityScore: number;
+  };
+  /** Timestamp of calculation */
+  calculatedAt: string;
+}
 
 /** Pillar-level aggregated metrics */
 export interface PillarMetrics {
@@ -389,3 +951,34 @@ export function isMilestoneStatus(value: string): value is MilestoneStatus {
 export function isTaskPriority(value: string): value is TaskPriority {
   return ['low', 'medium', 'high', 'critical'].includes(value);
 }
+
+// =============================================================================
+// RE-EXPORT CONFIGURATION TYPES
+// =============================================================================
+
+export type {
+  BusinessRulesConfig,
+  ImportEnforcementConfig,
+  RiskScoreConfig,
+  InsightsConfig,
+  ApprovalConfig,
+  RAGConfig,
+  FeatureToggles,
+  ConfigPreset,
+  PresetInfo,
+  CharterSectionRequirements,
+  CharterEnforcementConfig,
+  FieldEnforcementConfig,
+  ReferenceConfig,
+  BusinessRuleEnforcementConfig,
+  RiskWeights,
+  ThresholdLevels,
+  RiskThresholds,
+  RiskLevelBoundaries,
+  InsightCategoryToggles,
+  InsightThresholds,
+  GateMinimums,
+  ApprovalCategoryWeights,
+  CharterElementWeights,
+  RecommendationConfig,
+} from './config';

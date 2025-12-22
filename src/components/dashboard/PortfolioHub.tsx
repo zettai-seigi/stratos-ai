@@ -1,15 +1,42 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { useOrgContext } from '../../context/OrgContext';
 import { HealthRibbon } from '../portfolio/HealthRibbon';
 import { InitiativeRoadmap } from '../portfolio/InitiativeRoadmap';
 import { DataGrid } from '../portfolio/DataGrid';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Building2 } from 'lucide-react';
 
 export const PortfolioHub: React.FC = () => {
-  const { state } = useApp();
-  const { pillars, initiatives, projects, resources } = state;
+  const { state, getOrgUnit, getOrgUnitDescendants, getOrgConfig } = useApp();
+  const { selectedOrgUnitId, isFiltering } = useOrgContext();
+  const { pillars, resources } = state;
   const [searchParams] = useSearchParams();
+
+  const config = getOrgConfig();
+  const selectedUnit = selectedOrgUnitId ? getOrgUnit(selectedOrgUnitId) : null;
+
+  // Filter by org unit first (including descendants)
+  const { orgFilteredInitiatives, orgFilteredProjects } = useMemo(() => {
+    if (!isFiltering) {
+      return {
+        orgFilteredInitiatives: state.initiatives,
+        orgFilteredProjects: state.projects,
+      };
+    }
+
+    const orgIds = new Set([selectedOrgUnitId!]);
+    getOrgUnitDescendants(selectedOrgUnitId!).forEach((u) => orgIds.add(u.id));
+
+    return {
+      orgFilteredInitiatives: state.initiatives.filter((i) =>
+        orgIds.has(i.orgUnitId || 'org-company')
+      ),
+      orgFilteredProjects: state.projects.filter((p) =>
+        orgIds.has(p.orgUnitId || 'org-company')
+      ),
+    };
+  }, [state.initiatives, state.projects, selectedOrgUnitId, isFiltering, getOrgUnitDescendants]);
 
   // Filter by pillar if specified
   const pillarFilter = searchParams.get('pillar');
@@ -17,8 +44,8 @@ export const PortfolioHub: React.FC = () => {
 
   // Apply pillar filter
   let filteredInitiatives = pillarFilter
-    ? initiatives.filter((i) => i.pillarId === pillarFilter)
-    : initiatives;
+    ? orgFilteredInitiatives.filter((i) => i.pillarId === pillarFilter)
+    : orgFilteredInitiatives;
 
   // Apply status filter (at-risk = red or amber)
   if (statusFilter === 'at-risk') {
@@ -28,11 +55,11 @@ export const PortfolioHub: React.FC = () => {
   }
 
   let filteredProjects = pillarFilter
-    ? projects.filter((p) => {
-        const initiative = initiatives.find((i) => i.id === p.initiativeId);
+    ? orgFilteredProjects.filter((p) => {
+        const initiative = orgFilteredInitiatives.find((i) => i.id === p.initiativeId);
         return initiative?.pillarId === pillarFilter;
       })
-    : projects;
+    : orgFilteredProjects;
 
   // Filter projects by at-risk initiatives
   if (statusFilter === 'at-risk') {
@@ -80,11 +107,24 @@ export const PortfolioHub: React.FC = () => {
               </span>
             )}
           </h1>
-          <p className="text-text-secondary mt-1">PMO View</p>
+          <p className="text-text-secondary mt-1">
+            {isFiltering && selectedUnit
+              ? `Viewing: ${selectedUnit.name} (${config.levelNames[selectedUnit.level]})`
+              : 'PMO View'}
+          </p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-bg-card rounded-lg border border-border">
-          <Briefcase className="w-5 h-5 text-accent-purple" />
-          <span className="text-sm text-text-secondary">PMO Persona</span>
+          {isFiltering && selectedUnit ? (
+            <>
+              <Building2 className="w-5 h-5 text-accent-purple" />
+              <span className="text-sm text-text-secondary">{selectedUnit.name}</span>
+            </>
+          ) : (
+            <>
+              <Briefcase className="w-5 h-5 text-accent-purple" />
+              <span className="text-sm text-text-secondary">All Organizations</span>
+            </>
+          )}
         </div>
       </div>
 

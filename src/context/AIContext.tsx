@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { useApp } from './AppContext';
 import {
   AIAnalysisResult,
@@ -8,6 +8,11 @@ import {
   getAPIKey,
   isAIConfigured,
 } from '../services/aiService';
+import {
+  generateInsights,
+  generateExecutiveSummary,
+  RuleBasedInsight,
+} from '../utils/insightsEngine';
 
 interface AIContextType {
   // State
@@ -17,6 +22,10 @@ interface AIContextType {
   analysis: AIAnalysisResult | null;
   lastUpdated: string | null;
 
+  // Rule-based insights (always available)
+  ruleBasedInsights: RuleBasedInsight[];
+  ruleBasedSummary: ReturnType<typeof generateExecutiveSummary>;
+
   // Actions
   refreshAnalysis: (force?: boolean) => Promise<void>;
   getProjectSuggestion: (projectId: string) => Promise<AIProjectSuggestion | null>;
@@ -25,7 +34,7 @@ interface AIContextType {
   // Helpers
   getExecutiveSummary: () => string;
   getPillarInsight: (pillarId: string) => string;
-  getProjectAISuggestion: (projectId: string) => string;
+  getProjectAISuggestion: (projectId: string) => string | null;
 }
 
 const AIContext = createContext<AIContextType | undefined>(undefined);
@@ -39,6 +48,15 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [projectSuggestions, setProjectSuggestions] = useState<Record<string, AIProjectSuggestion>>({});
+
+  // Generate rule-based insights (always available, no AI required)
+  const ruleBasedInsights = useMemo(() => {
+    return generateInsights(state);
+  }, [state]);
+
+  const ruleBasedSummary = useMemo(() => {
+    return generateExecutiveSummary(ruleBasedInsights);
+  }, [ruleBasedInsights]);
 
   // Check if AI is configured on mount and when returning to the app
   useEffect(() => {
@@ -112,11 +130,17 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   // Helper functions for quick access to common data
   const getExecutiveSummary = useCallback((): string => {
-    if (!analysis) {
-      return generateFallbackSummary();
+    // First try AI analysis
+    if (analysis) {
+      return analysis.executiveSummary.summary;
     }
-    return analysis.executiveSummary.summary;
-  }, [analysis]);
+    // Fall back to rule-based summary
+    if (ruleBasedSummary.summary) {
+      return ruleBasedSummary.summary;
+    }
+    // Final fallback for when there's no data
+    return generateFallbackSummary();
+  }, [analysis, ruleBasedSummary]);
 
   const getPillarInsight = useCallback((pillarId: string): string => {
     if (!analysis) {
@@ -126,7 +150,7 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     return insight?.insight || generateFallbackPillarInsight(pillarId);
   }, [analysis]);
 
-  const getProjectAISuggestion = useCallback((projectId: string): string => {
+  const getProjectAISuggestion = useCallback((projectId: string): string | null => {
     // First check the full analysis
     if (analysis) {
       const suggestion = analysis.projectSuggestions.find(p => p.projectId === projectId);
@@ -138,13 +162,19 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       return projectSuggestions[projectId].suggestion;
     }
 
-    // Fallback
+    // Fallback - only return actionable warnings, not positive messages
     return generateFallbackProjectSuggestion(projectId);
   }, [analysis, projectSuggestions]);
 
   // Fallback generators when AI is not configured or hasn't loaded
   function generateFallbackSummary(): string {
     const { pillars, initiatives, projects, tasks } = state;
+
+    // If no data at all, return empty
+    if (pillars.length === 0 && initiatives.length === 0 && projects.length === 0) {
+      return '';
+    }
+
     const redPillars = pillars.filter(p => p.ragStatus === 'red').length;
     const blockedTasks = tasks.filter(t => t.kanbanStatus === 'blocked').length;
     const atRiskInitiatives = initiatives.filter(i => i.ragStatus !== 'green').length;
@@ -175,26 +205,51 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     return `On track with ${kpis.filter(k => k.currentValue >= k.targetValue).length}/${kpis.length} KPIs meeting targets.`;
   }
 
-  function generateFallbackProjectSuggestion(projectId: string): string {
+  function generateFallbackProjectSuggestion(projectId: string): string | null {
     const project = state.projects.find(p => p.id === projectId);
     const tasks = state.tasks.filter(t => t.projectId === projectId);
 
-    if (!project) return 'Project data not available.';
+    if (!project) return null;
+
+    // Collect all warnings - only return actionable issues
+    const warnings: string[] = [];
 
     const blockedTasks = tasks.filter(t => t.kanbanStatus === 'blocked').length;
     const overdueTasks = tasks.filter(t =>
       t.kanbanStatus !== 'done' && new Date(t.dueDate) < new Date()
     ).length;
-    const budgetUtilization = Math.round((project.spentBudget / project.budget) * 100);
+    const budgetUtilization = project.budget > 0
+      ? Math.round((project.spentBudget / project.budget) * 100)
+      : 0;
 
+    // Check for actual issues
     if (blockedTasks > 0) {
-      return `Resolve ${blockedTasks} blocked task(s) to improve flow. Consider reassigning or removing blockers.`;
-    } else if (overdueTasks > 0) {
-      return `${overdueTasks} task(s) are overdue. Review timeline and consider scope adjustment.`;
-    } else if (budgetUtilization > 90) {
-      return `Budget is ${budgetUtilization}% utilized. Monitor spending closely to avoid overrun.`;
+      warnings.push(`${blockedTasks} blocked task(s) need resolution`);
     }
-    return `Project is progressing well at ${project.completionPercentage}% completion.`;
+    if (overdueTasks > 0) {
+      warnings.push(`${overdueTasks} task(s) are overdue`);
+    }
+    if (budgetUtilization > 90) {
+      warnings.push(`Budget ${budgetUtilization}% utilized`);
+    }
+    if (project.ragStatus === 'red') {
+      const endDate = new Date(project.endDate);
+      if (endDate < new Date()) {
+        warnings.push('Project is past end date');
+      }
+    }
+    if (project.ragStatus === 'amber' || project.ragStatus === 'red') {
+      if (project.completionPercentage < 50 && new Date(project.endDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)) {
+        warnings.push('Low completion with deadline approaching');
+      }
+    }
+
+    // Only return if there are actual warnings
+    if (warnings.length === 0) {
+      return null;
+    }
+
+    return warnings.join('. ') + '.';
   }
 
   const value: AIContextType = {
@@ -203,6 +258,8 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     error,
     analysis,
     lastUpdated,
+    ruleBasedInsights,
+    ruleBasedSummary,
     refreshAnalysis,
     getProjectSuggestion,
     clearError,

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Initiative, Project, StrategyPillar, Resource, DEPARTMENTS, PROJECT_CATEGORIES } from '../../types';
+import { Initiative, Project, StrategyPillar, Resource, Task, DEPARTMENTS, PROJECT_CATEGORIES } from '../../types';
 import { RAGStatusLabel, Modal, InfoTooltip } from '../shared';
 import { InitiativeForm } from '../forms/InitiativeForm';
 import { formatCurrency } from '../../utils/calculations';
-import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info, FileText } from 'lucide-react';
+import { calculateRiskScore as calculateComprehensiveRisk, getRiskColorClass, formatPerformanceIndex } from '../../utils/riskScore';
+import { ChevronDown, ChevronRight, Edit2, AlertTriangle, Info, FileText, TrendingUp, TrendingDown, Clock, DollarSign, Users, Plus } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 interface DataGridProps {
   initiatives: Initiative[];
@@ -23,6 +25,7 @@ export const DataGrid: React.FC<DataGridProps> = ({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
   const [showRiskTooltip, setShowRiskTooltip] = useState<string | null>(null);
+  const [isAddInitiativeModalOpen, setIsAddInitiativeModalOpen] = useState(false);
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -34,56 +37,37 @@ export const DataGrid: React.FC<DataGridProps> = ({
     setExpandedRows(newExpanded);
   };
 
+  // Get tasks from context for comprehensive risk calculation
+  const { state } = useApp();
+  const allTasks = state.tasks;
+
   const getPillarName = (pillarId: string) =>
     pillars.find((p) => p.id === pillarId)?.name || 'Unknown';
 
   const getProjectCount = (initiativeId: string) =>
     projects.filter((p) => p.initiativeId === initiativeId).length;
 
-  const calculateAIRiskScore = (initiative: Initiative, initiativeProjects: Project[]) => {
-    // Simulated AI risk score calculation
-    let score = 50;
-    const factors: string[] = [];
-
-    if (initiative.ragStatus === 'red') {
-      score += 30;
-      factors.push('Initiative marked as critical (Red status)');
-    } else if (initiative.ragStatus === 'amber') {
-      score += 15;
-      factors.push('Initiative at risk (Amber status)');
-    }
-
-    const budgetVariance = ((initiative.spentBudget - initiative.budget) / initiative.budget) * 100;
-    if (budgetVariance > 10) {
-      score += 20;
-      factors.push(`Budget overrun: ${budgetVariance.toFixed(0)}% over budget`);
-    } else if (budgetVariance > 0) {
-      score += 10;
-      factors.push(`Budget variance: ${budgetVariance.toFixed(0)}% over budget`);
-    }
-
-    const redProjects = initiativeProjects.filter((p) => p.ragStatus === 'red').length;
-    if (redProjects > 0) {
-      score += redProjects * 10;
-      factors.push(`${redProjects} project(s) in critical status`);
-    }
-
-    const amberProjects = initiativeProjects.filter((p) => p.ragStatus === 'amber').length;
-    if (amberProjects > 0) {
-      factors.push(`${amberProjects} project(s) at risk`);
-    }
-
-    if (factors.length === 0) {
-      factors.push('No significant risk factors detected');
-    }
-
-    return { score: Math.min(100, Math.max(0, score)), factors };
+  // Get tasks for an initiative (via its projects)
+  const getInitiativeTasks = (initiativeId: string): Task[] => {
+    const projectIds = projects
+      .filter(p => p.initiativeId === initiativeId)
+      .map(p => p.id);
+    return allTasks.filter(t => projectIds.includes(t.projectId));
   };
 
   return (
     <div className="bg-bg-card rounded-xl border border-border overflow-hidden">
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <h3 className="text-lg font-semibold text-text-primary">Initiative & Project Data Grid</h3>
+        {pillars.length > 0 && (
+          <button
+            onClick={() => setIsAddInitiativeModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent-blue hover:bg-accent-blue/10 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Initiative
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -110,7 +94,7 @@ export const DataGrid: React.FC<DataGridProps> = ({
               </th>
               <th className="px-4 py-3 text-center text-sm font-medium text-text-secondary">
                 <div className="flex items-center justify-center gap-1">
-                  AI Risk Score (0-100)
+                  Risk Score
                   <InfoTooltip
                     title="Risk Score Calculation"
                     content={
@@ -135,9 +119,11 @@ export const DataGrid: React.FC<DataGridProps> = ({
               const initiativeProjects = projects.filter(
                 (p) => p.initiativeId === initiative.id
               );
+              const initiativeTasks = getInitiativeTasks(initiative.id);
               const isExpanded = expandedRows.has(initiative.id);
               const budgetVariance = initiative.spentBudget - initiative.budget;
-              const { score: aiRiskScore, factors: riskFactors } = calculateAIRiskScore(initiative, initiativeProjects);
+              const riskBreakdown = calculateComprehensiveRisk(initiative, initiativeProjects, initiativeTasks, resources);
+              const riskScore = riskBreakdown.totalScore;
 
               return (
                 <React.Fragment key={initiative.id}>
@@ -202,28 +188,103 @@ export const DataGrid: React.FC<DataGridProps> = ({
                           setShowRiskTooltip(showRiskTooltip === initiative.id ? null : initiative.id);
                         }}
                         className={`inline-flex items-center gap-1 text-sm font-medium cursor-pointer hover:underline ${
-                          aiRiskScore > 70
+                          riskScore > 60
                             ? 'text-rag-red'
-                            : aiRiskScore > 50
+                            : riskScore > 30
                             ? 'text-rag-amber'
                             : 'text-rag-green'
                         }`}
                       >
-                        {aiRiskScore}
+                        {riskScore}
                         <Info className="w-3.5 h-3.5" />
                       </div>
-                      {/* Risk Tooltip */}
+                      {/* Risk Tooltip - Enhanced with PPM metrics */}
                       {showRiskTooltip === initiative.id && (
-                        <div className="absolute right-0 top-full mt-1 z-50 w-64 p-3 bg-bg-card border border-border rounded-lg shadow-lg text-left">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className={`w-4 h-4 ${aiRiskScore > 70 ? 'text-rag-red' : aiRiskScore > 50 ? 'text-rag-amber' : 'text-rag-green'}`} />
-                            <span className="text-sm font-semibold text-text-primary">Risk Score: {aiRiskScore}</span>
+                        <div className="absolute right-0 top-full mt-1 z-50 w-80 p-4 bg-bg-card border border-border rounded-lg shadow-lg text-left">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className={`w-4 h-4 ${getRiskColorClass(riskBreakdown.riskLevel)}`} />
+                              <span className="text-sm font-semibold text-text-primary">Risk Score: {riskScore}</span>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                              riskBreakdown.riskLevel === 'low' ? 'bg-rag-green/20 text-rag-green' :
+                              riskBreakdown.riskLevel === 'medium' ? 'bg-rag-amber/20 text-rag-amber' :
+                              'bg-rag-red/20 text-rag-red'
+                            }`}>
+                              {riskBreakdown.riskLevel}
+                            </span>
                           </div>
-                          <div className="space-y-1">
-                            {riskFactors.map((factor, idx) => (
-                              <p key={idx} className="text-xs text-text-secondary">• {factor}</p>
-                            ))}
+
+                          {/* Performance Indices */}
+                          <div className="grid grid-cols-2 gap-2 mb-3 pb-3 border-b border-border">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-text-muted" />
+                              <span className="text-xs text-text-secondary">SPI:</span>
+                              <span className={`text-xs font-medium ${riskBreakdown.indices.spi >= 0.9 ? 'text-rag-green' : riskBreakdown.indices.spi >= 0.8 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {formatPerformanceIndex(riskBreakdown.indices.spi)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <DollarSign className="w-3.5 h-3.5 text-text-muted" />
+                              <span className="text-xs text-text-secondary">CPI:</span>
+                              <span className={`text-xs font-medium ${riskBreakdown.indices.cpi >= 0.9 ? 'text-rag-green' : riskBreakdown.indices.cpi >= 0.8 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {formatPerformanceIndex(riskBreakdown.indices.cpi)}
+                              </span>
+                            </div>
                           </div>
+
+                          {/* Dimension Summary */}
+                          <div className="grid grid-cols-5 gap-1 mb-3 text-center">
+                            <div title="Schedule">
+                              <div className="text-[10px] text-text-muted">Time</div>
+                              <div className={`text-xs font-medium ${riskBreakdown.summary.scheduleScore <= 30 ? 'text-rag-green' : riskBreakdown.summary.scheduleScore <= 60 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {riskBreakdown.summary.scheduleScore}
+                              </div>
+                            </div>
+                            <div title="Cost">
+                              <div className="text-[10px] text-text-muted">Cost</div>
+                              <div className={`text-xs font-medium ${riskBreakdown.summary.costScore <= 30 ? 'text-rag-green' : riskBreakdown.summary.costScore <= 60 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {riskBreakdown.summary.costScore}
+                              </div>
+                            </div>
+                            <div title="Scope">
+                              <div className="text-[10px] text-text-muted">Scope</div>
+                              <div className={`text-xs font-medium ${riskBreakdown.summary.scopeScore <= 30 ? 'text-rag-green' : riskBreakdown.summary.scopeScore <= 60 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {riskBreakdown.summary.scopeScore}
+                              </div>
+                            </div>
+                            <div title="Resource">
+                              <div className="text-[10px] text-text-muted">Team</div>
+                              <div className={`text-xs font-medium ${riskBreakdown.summary.resourceScore <= 30 ? 'text-rag-green' : riskBreakdown.summary.resourceScore <= 60 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {riskBreakdown.summary.resourceScore}
+                              </div>
+                            </div>
+                            <div title="Quality">
+                              <div className="text-[10px] text-text-muted">Quality</div>
+                              <div className={`text-xs font-medium ${riskBreakdown.summary.qualityScore <= 30 ? 'text-rag-green' : riskBreakdown.summary.qualityScore <= 60 ? 'text-rag-amber' : 'text-rag-red'}`}>
+                                {riskBreakdown.summary.qualityScore}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Top Risk Factors */}
+                          {riskBreakdown.factors.length > 0 && (
+                            <div className="space-y-1.5">
+                              <div className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Risk Factors</div>
+                              {riskBreakdown.factors.slice(0, 4).map((factor, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                                    factor.severity === 'critical' || factor.severity === 'high' ? 'bg-rag-red' :
+                                    factor.severity === 'medium' ? 'bg-rag-amber' : 'bg-rag-green'
+                                  }`} />
+                                  <p className="text-xs text-text-secondary">{factor.description}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {riskBreakdown.factors.length === 0 && (
+                            <p className="text-xs text-rag-green">No significant risk factors detected</p>
+                          )}
                         </div>
                       )}
                     </td>
@@ -288,6 +349,26 @@ export const DataGrid: React.FC<DataGridProps> = ({
                 </React.Fragment>
               );
             })}
+            {initiatives.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center">
+                  <div className="text-text-muted mb-2">No initiatives found</div>
+                  {pillars.length > 0 ? (
+                    <button
+                      onClick={() => setIsAddInitiativeModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm text-accent-blue hover:bg-accent-blue/10 rounded-lg transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add your first initiative
+                    </button>
+                  ) : (
+                    <div className="text-sm text-text-secondary">
+                      Create strategy pillars first in the Strategy Hub
+                    </div>
+                  )}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -309,6 +390,18 @@ export const DataGrid: React.FC<DataGridProps> = ({
             }}
           />
         )}
+      </Modal>
+
+      {/* Add Initiative Modal */}
+      <Modal
+        isOpen={isAddInitiativeModalOpen}
+        onClose={() => setIsAddInitiativeModalOpen(false)}
+        title="Add New Initiative"
+        size="lg"
+      >
+        <InitiativeForm
+          onClose={() => setIsAddInitiativeModalOpen(false)}
+        />
       </Modal>
     </div>
   );
