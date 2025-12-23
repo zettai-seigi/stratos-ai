@@ -65,7 +65,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ expanded, onExpandedChange }) => {
-  const [pinned, setPinned] = useState(true);
+  const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   // Sidebar shows expanded content if pinned OR hovered
